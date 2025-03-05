@@ -148,6 +148,7 @@ function closeModal() {
 async function addNode() {
     const nodeType = document.getElementById('nodeType').value;
     const nodeName = document.getElementById('nodeName').value;
+    const nodeDescription = document.getElementById('nodeDescription').value;
 
     if (!nodeName) {
         alert('请输入节点名称');
@@ -163,7 +164,8 @@ async function addNode() {
             body: JSON.stringify({
                 parentId: currentParentId,
                 nodeType: nodeType,
-                text: nodeName
+                text: nodeName,
+                description: nodeDescription
             })
         });
 
@@ -216,6 +218,13 @@ function editNode(nodeId) {
                 const [, text, type] = match;
                 document.getElementById('editNodeType').value = type || '书籍';
                 document.getElementById('editNodeName').value = text.trim();
+                // 获取节点描述
+                fetch(`/api/node/${nodeId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('editNodeDescription').value = data.description || '';
+                    })
+                    .catch(error => console.error('获取节点描述失败:', error));
             }
         }
     }
@@ -225,6 +234,7 @@ function editNode(nodeId) {
 async function submitEditNode() {
     const nodeType = document.getElementById('editNodeType').value;
     const nodeName = document.getElementById('editNodeName').value;
+    const nodeDescription = document.getElementById('editNodeDescription').value;
 
     if (!nodeName) {
         alert('请输入节点名称');
@@ -239,7 +249,8 @@ async function submitEditNode() {
             },
             body: JSON.stringify({
                 nodeType: nodeType,
-                text: nodeName
+                text: nodeName,
+                description: nodeDescription
             })
         });
 
@@ -261,7 +272,26 @@ function closeEditModal() {
     document.getElementById('editNodeModal').style.display = 'none';
     document.getElementById('editNodeName').value = '';
 }
-
+// 查看节点
+async function viewNode(nodeId) {
+    try {
+        const response = await fetch(`/api/node/${nodeId}`);
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '获取节点信息失败');
+        }
+        
+        const node = await response.json();
+        const contentArea = document.getElementById('contentArea');
+        contentArea.innerHTML = `
+            <h3>${node.text} ${node.type ? `(${node.type})` : ''}</h3>
+            <p>${node.description || '暂无描述'}</p>
+        `;
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    }
+}
 // 删除节点
 async function deleteNode(nodeId) {
     if (!confirm('确定要删除此节点吗？')) {
@@ -328,4 +358,4 @@ async function sendMessage() {
 document.addEventListener('DOMContentLoaded', () => {
     fetchTreeData();
     initializeControlPanel();
-}); 
+});

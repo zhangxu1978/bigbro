@@ -11,7 +11,8 @@
           "id": "1741143578261",
           "type": "章节",
           "text": "章节一",
-          "children": []
+          "children": [],
+          "description": "123"
         }
       ]
     }

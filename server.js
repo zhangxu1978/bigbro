@@ -42,7 +42,7 @@ app.get('/api/tree', (req, res) => {
 
 // 添加新节点
 app.post('/api/node', (req, res) => {
-    const { parentId, nodeType, text } = req.body;
+    const { parentId, nodeType, text, description } = req.body;
     const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
 
     // 验证根节点只能添加书籍
@@ -76,6 +76,7 @@ app.post('/api/node', (req, res) => {
         id: Date.now().toString(),
         type: nodeType,
         text: text,
+        description: description || '',
         children: []
     };
 
@@ -133,7 +134,7 @@ app.delete('/api/node/:id', (req, res) => {
 // 修改节点
 app.put('/api/node/:id', (req, res) => {
     const nodeId = req.params.id;
-    const { text, nodeType } = req.body;
+    const { text, nodeType, description } = req.body;
     const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
 
     // 不允许修改根节点类型
@@ -155,6 +156,10 @@ app.put('/api/node/:id', (req, res) => {
                 }
                 node.type = nodeType;
             }
+            // 如果提供了新的描述，则更新描述
+            if (description !== undefined) {
+                node.description = description;
+            }
             return { success: true, node };
         }
         // 递归查找子节点
@@ -175,6 +180,30 @@ app.put('/api/node/:id', (req, res) => {
 
     fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
     res.json(result.node);
+});
+
+// 获取单个节点信息
+app.get('/api/node/:id', (req, res) => {
+    const nodeId = req.params.id;
+    const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
+    function findNode(node) {
+        if (node.id === nodeId) {
+            return node;
+        }
+        for (let child of node.children) {
+            const found = findNode(child);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    const node = findNode(data);
+    if (!node) {
+        return res.status(404).json({ error: '节点未找到' });
+    }
+
+    res.json(node);
 });
 
 // 修改 API 配置路由
