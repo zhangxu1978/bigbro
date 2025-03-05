@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>知识管理系统</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="panel-title">节点树</div>
+            <div id="treeContainer"></div>
+        </div>
+        <div class="middle-panel">
+            <div class="panel-title">内容区域</div>
+            <div id="contentArea">
+                <p>请选择左侧节点查看详细信息</p>
+            </div>
+        </div>
+        <div class="right-panel-container">
+            <button class="right-toggle" onclick="togglePanel('right')">▶</button>
+            <div class="right-panel">
+                <div class="panel-title">控制面板</div>
+                <div class="control-panel-content">
+                    <div class="form-group">
+                        <label>选择模型：</label>
+                        <select id="modelSelect" class="control-select">
+                            <!-- 将由JavaScript动态填充 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>选择助手：</label>
+                        <select id="assistantSelect" class="control-select">
+                            <!-- 将由JavaScript动态填充 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>输入内容：</label>
+                        <textarea id="userInput" class="control-textarea" rows="4"></textarea>
+                    </div>
+                    <button id="sendButton" class="control-button" onclick="sendMessage()">发送</button>
+                    <div id="responseArea" class="response-area"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="addNodeModal">
+        <div class="modal-content">
+            <div class="form-group">
+                <label>节点类型：</label>
+                <select id="nodeType">
+                    <option value="书籍">书籍</option>
+                    <option value="章节">章节</option>
+                    <option value="角色">角色</option>
+                    <option value="世界观">世界观</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>节点名称：</label>
+                <input type="text" id="nodeName">
+            </div>
+            <button onclick="addNode()">确定</button>
+            <button onclick="closeModal()">取消</button>
+        </div>
+    </div>
+
+    <div class="modal" id="editNodeModal">
+        <div class="modal-content">
+            <div class="form-group">
+                <label>节点类型：</label>
+                <select id="editNodeType">
+                    <option value="书籍">书籍</option>
+                    <option value="章节">章节</option>
+                    <option value="角色">角色</option>
+                    <option value="世界观">世界观</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>节点名称：</label>
+                <input type="text" id="editNodeName">
+            </div>
+            <button onclick="submitEditNode()">确定</button>
+            <button onclick="closeEditModal()">取消</button>
+        </div>
+    </div>
+
+    <div class="context-menu" id="nodeContextMenu">
+        <div class="context-menu-item" onclick="showAddModal(currentNodeId)">新增节点</div>
+        <div class="context-menu-item" onclick="editNode(currentNodeId)">修改节点</div>
+        <div class="context-menu-item" onclick="deleteNode(currentNodeId)">删除节点</div>
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+</html>
