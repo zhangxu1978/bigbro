@@ -170,6 +170,8 @@ async function initializePage() {
     ]);
 }
 
+let isCountingDown = false;
+
 // 发送消息
 async function sendMessage() {
     const userInput = document.getElementById('user-input');
@@ -180,6 +182,7 @@ async function sendMessage() {
     
     // 禁用发送按钮并开始倒计时
     sendButton.disabled = true;
+    isCountingDown = true;
     let countdown = 10;
     const originalText = sendButton.textContent;
     const countdownInterval = setInterval(() => {
@@ -189,6 +192,7 @@ async function sendMessage() {
             clearInterval(countdownInterval);
             sendButton.disabled = false;
             sendButton.textContent = originalText;
+            isCountingDown = false;
         }
     }, 1000);
 
@@ -248,29 +252,26 @@ function addMessage(role, content) {
     const messageDiv = document.createElement('div');
     messageDiv.setAttribute('role', role);
     
-    // 创建消息内容的span元素
-    const contentSpan = document.createElement('span');
-    contentSpan.textContent = content;
-    messageDiv.appendChild(contentSpan);
-         // Check for code blocks
-         const codeRegex = /```([\s\S]*?)```/g;
-         const parts = content.split(codeRegex);
-         parts.forEach((part, index) => {
-             if (index % 2 === 0) {
-                 // Regular text
-                 messageDiv.appendChild(document.createTextNode(part));
-             } else {
-                 // Code block
-                 const codePre = document.createElement('pre');
-                 codePre.textContent = part;
-                 const copyButton = document.createElement('button');
-                 copyButton.textContent = '复制';
-                 copyButton.classList.add('copy-button');
-                 copyButton.addEventListener('click', () => copyToClipboard(part));
-                 codePre.appendChild(copyButton);
-                 messageDiv.appendChild(codePre);
-             }
-         });
+    // 处理代码块和普通文本
+    const codeRegex = /```([\s\S]*?)```/g;
+    const parts = content.split(codeRegex);
+    parts.forEach((part, index) => {
+        if (index % 2 === 0) {
+            // Regular text
+            messageDiv.appendChild(document.createTextNode(part));
+        } else {
+            // Code block
+            const codePre = document.createElement('pre');
+            codePre.textContent = part;
+            const copyButton = document.createElement('button');
+            copyButton.textContent = '复制';
+            copyButton.classList.add('copy-button');
+            copyButton.addEventListener('click', () => copyToClipboard(part));
+            codePre.appendChild(copyButton);
+            messageDiv.appendChild(codePre);
+        }
+    });
+
     // 添加删除按钮
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-button';
@@ -354,8 +355,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('user-input');
     const sendButton = document.getElementById('send-button');
     
+    // 添加自动调整高度的功能
+    function adjustTextareaHeight() {
+        userInput.style.height = 'auto';
+        userInput.style.height = userInput.scrollHeight + 'px';
+    }
+    
+    userInput.addEventListener('input', adjustTextareaHeight);
+    
     userInput.onkeydown = (event) => {
-        if (event.key === 'Enter' && event.shiftKey) {
+        if (event.key === 'Enter' && event.shiftKey && !isCountingDown) {
             event.preventDefault();
             sendMessage();
         }

@@ -55,7 +55,7 @@ function renderTree(node, level = 0) {
         }
 
         // 更新父节点的复选框状态
-        updateParentCheckboxState(nodeElement.parentElement.closest('.tree-node'));
+        // updateParentCheckboxState(nodeElement.parentElement.closest('.tree-node'));
     };
     const textSpan = document.createElement('span');
     textSpan.textContent = `${node.text} ${node.type ? `(${node.type})` : ''}`;
@@ -395,28 +395,28 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTreeData();
     initializeControlPanel();
 });
-// 添加更新父节点复选框状态的函数
-function updateParentCheckboxState(parentNode) {
-    if (!parentNode) return;
+// // 添加更新父节点复选框状态的函数
+// function updateParentCheckboxState(parentNode) {
+//     if (!parentNode) return;
 
-    const parentCheckbox = parentNode.querySelector('.checkbox');
-    const childrenContainer = parentNode.querySelector('.children-container');
+//     const parentCheckbox = parentNode.querySelector('.checkbox');
+//     const childrenContainer = parentNode.querySelector('.children-container');
     
-    if (childrenContainer) {
-        const childCheckboxes = Array.from(childrenContainer.querySelectorAll('.checkbox'));
-        const allChecked = childCheckboxes.every(checkbox => checkbox.checked);
-        const allUnchecked = childCheckboxes.every(checkbox => !checkbox.checked);
+//     if (childrenContainer) {
+//         const childCheckboxes = Array.from(childrenContainer.querySelectorAll('.checkbox'));
+//         const allChecked = childCheckboxes.every(checkbox => checkbox.checked);
+//         const allUnchecked = childCheckboxes.every(checkbox => !checkbox.checked);
         
-        if (allChecked) {
-            parentCheckbox.checked = true;
-        } else if (allUnchecked) {
-            parentCheckbox.checked = false;
-        }
+//         if (allChecked) {
+//             parentCheckbox.checked = true;
+//         } else if (allUnchecked) {
+//             parentCheckbox.checked = false;
+//         }
 
-        // 递归更新上层父节点
-        updateParentCheckboxState(parentNode.parentElement.closest('.tree-node'));
-    }
-}
+//         // 递归更新上层父节点
+//         updateParentCheckboxState(parentNode.parentElement.closest('.tree-node'));
+//     }
+// }
 document.getElementById('editContentBtn').addEventListener('click', function() {
     isEditing = true;
     originalContent = document.getElementById('contentArea').innerHTML;
