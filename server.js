@@ -362,18 +362,24 @@ app.post('/api/chat', async (req, res) => {
         // 构建完整的对话历史
         const messages = [
             { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: message }
+            ...conversationHistory
+          //  { role: 'user', content: message }
         ];
 
         switch (model.provider) {
             case 'google':
-
                 // 转换对话历史为Google API格式
                 const contents = messages.map(msg => ({
-                    role: msg.role === 'system' ? 'user' : msg.role,
+                    role: msg.role === 'system' ? 'user' : msg.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: msg.content }]
                 }));
+                
+                if (message) {
+                    contents.push({
+                        role: 'user',
+                        parts: [{ text: message }]
+                    });
+                }
                 
                 response = await axios.post(`${model.apiBase}/models/${model.model}:generateContent?key=${model.apiKey}`, {
                     contents
@@ -383,7 +389,7 @@ app.post('/api/chat', async (req, res) => {
                     },
                     httpsAgent: agent, // 添加代理支持
                 });
-                res.json( response.data.candidates[0].content.parts[0].text );
+                res.json( {response: response.data.candidates[0].content.parts[0].text} );
                 break;
                 case 'tianyi':
                     case 'huawei':
@@ -406,7 +412,7 @@ app.post('/api/chat', async (req, res) => {
                         'Content-Type': 'application/json'
                     }
                 });
-                res.json( response.data.choices[0].message.content );
+                res.json( { response: response.data.choices[0].message.content }  );
                 break;
 
 

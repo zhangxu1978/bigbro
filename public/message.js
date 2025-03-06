@@ -173,10 +173,25 @@ async function initializePage() {
 // 发送消息
 async function sendMessage() {
     const userInput = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
     const message = userInput.value.trim();
     
     if (!message) return;
     
+    // 禁用发送按钮并开始倒计时
+    sendButton.disabled = true;
+    let countdown = 10;
+    const originalText = sendButton.textContent;
+    const countdownInterval = setInterval(() => {
+        sendButton.textContent = `${countdown}秒`;
+        countdown--;
+        if (countdown < 0) {
+            clearInterval(countdownInterval);
+            sendButton.disabled = false;
+            sendButton.textContent = originalText;
+        }
+    }, 1000);
+
     // 添加用户消息到界面
     addMessage('user', message);
     userInput.value = '';
@@ -198,8 +213,8 @@ async function sendMessage() {
         });
         
         if (response.ok) {
-            const data = await response.text();
-            addMessage('assistant', data);
+            const data = await response.json();
+            addMessage('assistant', data.response);
         } else {
             const error = await response.json();
             addMessage('assistant', `错误: ${error.error}`);
@@ -217,7 +232,8 @@ function getConversationHistory() {
     
     for (const element of container.children) {
         const role = element.getAttribute('role');
-        const content = element.textContent;
+        const contentSpan = element.querySelector('span');
+        const content = contentSpan ? contentSpan.textContent : '';
         if (role && content) {
             messages.push({ role, content });
         }
@@ -231,7 +247,11 @@ function addMessage(role, content) {
     const container = document.getElementById('response-container');
     const messageDiv = document.createElement('div');
     messageDiv.setAttribute('role', role);
-    messageDiv.textContent = content;
+    
+    // 创建消息内容的span元素
+    const contentSpan = document.createElement('span');
+    contentSpan.textContent = content;
+    messageDiv.appendChild(contentSpan);
     
     // 添加删除按钮
     const deleteButton = document.createElement('button');
