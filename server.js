@@ -348,7 +348,7 @@ app.get('/api/config', (req, res) => {
 
 // 修改聊天 API 路由
 app.post('/api/chat', async (req, res) => {
-    const { model: modelId, assistant, message } = req.body;
+    const { model: modelId, assistant, message, conversationHistory = [] } = req.body;
     
     try {
         const model = config.models.find(m => m.id === modelId);
@@ -358,22 +358,32 @@ app.post('/api/chat', async (req, res) => {
 
         const systemPrompt = assistantsConfig.assistants[assistant]?.prompt || assistantsConfig.assistants.default.prompt;
         let response;
+        
+        // 构建完整的对话历史
+        const messages = [
+            { role: 'system', content: systemPrompt },
+            ...conversationHistory,
+            { role: 'user', content: message }
+        ];
 
         switch (model.provider) {
             case 'google':
 
+                // 转换对话历史为Google API格式
+                const contents = messages.map(msg => ({
+                    role: msg.role === 'system' ? 'user' : msg.role,
+                    parts: [{ text: msg.content }]
+                }));
+                
                 response = await axios.post(`${model.apiBase}/models/${model.model}:generateContent?key=${model.apiKey}`, {
-                    contents: [{
-                        role: 'user',
-                        parts: [{ text: `${systemPrompt}\n${message}` }]
-                    }]
+                    contents
                 }, {
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     httpsAgent: agent, // 添加代理支持
                 });
-                res.json({ response: response.data.candidates[0].content.parts[0].text });
+                res.json( response.data.candidates[0].content.parts[0].text );
                 break;
                 case 'tianyi':
                     case 'huawei':
@@ -389,17 +399,14 @@ app.post('/api/chat', async (req, res) => {
             case 'siliconflowQVQ-72B-Preview':
                 response = await axios.post(`${model.apiBase}/chat/completions`, {
                     model: model.model,
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: message }
-                    ]
+                    messages: messages
                 }, {
                     headers: {
                         'Authorization': `Bearer ${model.apiKey}`,
                         'Content-Type': 'application/json'
                     }
                 });
-                res.json({ response: response.data.choices[0].message.content });
+                res.json( response.data.choices[0].message.content );
                 break;
 
 
