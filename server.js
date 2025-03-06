@@ -303,6 +303,34 @@ app.get('/api/node/:id', (req, res) => {
     res.json(node);
 });
 
+// 配置文件路径
+const modelConfigsFile = path.join(__dirname, 'data', 'model_configs.json');
+
+// 读取模型配置文件
+function readModelConfigs() {
+    if (!fs.existsSync(modelConfigsFile)) {
+        return { configs: {} };
+    }
+    return JSON.parse(fs.readFileSync(modelConfigsFile, 'utf8'));
+}
+
+// 保存模型配置
+app.post('/api/model-configs', (req, res) => {
+    const { name, config } = req.body;
+    const modelConfigs = readModelConfigs();
+    
+    modelConfigs.configs[name] = config;
+    fs.writeFileSync(modelConfigsFile, JSON.stringify(modelConfigs, null, 2));
+    
+    res.json({ message: '配置保存成功' });
+});
+
+// 获取所有保存的配置
+app.get('/api/model-configs', (req, res) => {
+    const modelConfigs = readModelConfigs();
+    res.json(modelConfigs);
+});
+
 // 修改 API 配置路由
 app.get('/api/config', (req, res) => {
     // 返回不包含敏感信息的配置
@@ -310,7 +338,8 @@ app.get('/api/config', (req, res) => {
         models: config.models.map(model => ({
             id: model.id,
             name: model.name,
-            provider: model.provider
+            provider: model.provider,
+            model: model.model
         })),
         systemPrompts: config.systemPrompts
     };

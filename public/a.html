@@ -138,25 +138,114 @@
             margin-right: 5px; /* Space between icon and text */
         }
 
-        #model-select {
-            margin-right: 10px;
+        .config-button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
             padding: 8px 15px;
-            border-radius: 20px;
-            border: 1px solid #e0e0e0;
-            background-color: #f8f9fa;
-            font-size: 14px;
-            color: #495057;
             cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
             transition: all 0.3s ease;
-            outline: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23495057' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 16px;
-            padding-right: 30px;
+        }
+
+        .config-button:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .config-form {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .save-config-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-config-btn:hover {
+            background-color: #218838;
+        }
+
+        .load-config-select {
+            width: 200px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .form-group select, .form-group input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+        #model-select, #assistant-select, #output-format {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+            font-size: 14px;
+            color: #333;
         }
 
         #model-select:hover {
@@ -292,9 +381,7 @@
 <body>
     <div id="response-container"></div>
     <div id="input-container">
-        <select id="model-select">
-            <!-- 模型选项将通过JavaScript动态加载 -->
-        </select>
+        <button id="config-button" class="config-button">模型配置</button>
         <div class="action-menu">
             <button class="action-button">⋮</button>
             <div class="action-dropdown">
@@ -323,271 +410,254 @@
         <textarea id="user-input" placeholder="shift enter 发送数据"></textarea>
         <button id="send-button">发送</button>
     </div>
+        <!-- 模型配置模态框 -->
+        <div id="config-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>模型配置</h3>
+                <div class="form-actions">
+                    <div class="load-config-container">
+                        <select id="load-config-select" class="load-config-select">
+                            <option value="">选择已保存的配置...</option>
+                        </select>
+                    </div>
+                    <button id="save-config-btn" class="save-config-btn">保存当前配置</button>
+                </div>
+                <div class="config-form">
+                    <div class="form-group">
+                        <label for="model-select">选择模型：</label>
+                        <select id="model-select">
+                            <!-- 模型选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="assistant-select">选择助手：</label>
+                        <select id="assistant-select">
+                            <!-- 助手选项将通过JavaScript动态加载 -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="output-format">输出格式：</label>
+                        <select id="output-format">
+                            <option value="text">文本</option>
+                            <option value="markdown">Markdown</option>
+                            <option value="json">JSON</option>
+                        </select>
+                    </div>
 
+                           
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="temperature">Temperature：<span id="temperature-value">0.8</span></label>
+                        <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="form-group">
+                        <label for="top-p">Top-p：<span id="top-p-value">0.8</span></label>
+                        <input type="range" id="top-p" min="0" max="1" step="0.1" value="0.8">
+                    </div>
+                    <div class="form-group">
+                        <label for="top-k">Top-k：<span id="top-k-value">50</span></label>
+                        <input type="range" id="top-k" min="1" max="100" step="1" value="50">
+                    </div>
+                    <div class="form-group">
+                        <label for="frequency-penalty">Frequency Penalty：<span id="frequency-penalty-value">0</span></label>
+                        <input type="range" id="frequency-penalty" min="0" max="2" step="0.1" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="max-tokens">Max Tokens：<span id="max-tokens-value">2048</span></label>
+                        <input type="range" id="max-tokens" min="1" max="8000" step="1" value="2048">
+                    </div>
+                </div>
+            </div>
+        </div>
     <script>
-        // 接收来自父窗口的模型配置
-        window.addEventListener('message', function(event) {
-            if (event.data.type === 'modelConfig') {
-                const modelSelect = document.getElementById('model-select');
-                modelSelect.innerHTML = ''; // 清空现有选项
+        // 更新滑块值显示
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueSpan = document.getElementById(valueId);
+            valueSpan.textContent = slider.value;
+            slider.oninput = function() {
+                valueSpan.textContent = this.value;
+            }
+        }
+
+        // 初始化所有滑块
+        updateSliderValue('temperature', 'temperature-value');
+        updateSliderValue('top-p', 'top-p-value');
+        updateSliderValue('top-k', 'top-k-value');
+        updateSliderValue('frequency-penalty', 'frequency-penalty-value');
+        updateSliderValue('max-tokens', 'max-tokens-value');
+
+        // 获取当前配置
+        function getCurrentConfig() {
+            return {
+                model: document.getElementById('model-select').value,
+                assistant: document.getElementById('assistant-select').value,
+                outputFormat: document.getElementById('output-format').value,
+                temperature: document.getElementById('temperature').value,
+                topP: document.getElementById('top-p').value,
+                topK: document.getElementById('top-k').value,
+                frequencyPenalty: document.getElementById('frequency-penalty').value,
+                maxTokens: document.getElementById('max-tokens').value
+            };
+        }
+
+        // 应用配置
+        function applyConfig(config) {
+            document.getElementById('model-select').value = config.model;
+            document.getElementById('assistant-select').value = config.assistant;
+            document.getElementById('output-format').value = config.outputFormat;
+            document.getElementById('temperature').value = config.temperature;
+            document.getElementById('top-p').value = config.topP;
+            document.getElementById('top-k').value = config.topK;
+            document.getElementById('frequency-penalty').value = config.frequencyPenalty;
+            document.getElementById('max-tokens').value = config.maxTokens;
+
+            // 更新滑块显示值
+            updateSliderValue('temperature', 'temperature-value');
+            updateSliderValue('top-p', 'top-p-value');
+            updateSliderValue('top-k', 'top-k-value');
+            updateSliderValue('frequency-penalty', 'frequency-penalty-value');
+            updateSliderValue('max-tokens', 'max-tokens-value');
+        }
+
+        // 加载保存的配置列表
+        async function loadConfigList() {
+            try {
+                const response = await fetch('/api/model-configs');
+                const data = await response.json();
+                const select = document.getElementById('load-config-select');
                 
-                event.data.config.forEach(model => {
+                // 清空现有选项
+                select.innerHTML = '<option value="">选择已保存的配置...</option>';
+                
+                // 添加配置选项
+                Object.keys(data.configs).forEach(name => {
                     const option = document.createElement('option');
-                    option.value = model.id;
-                    option.textContent = model.name;
-                    modelSelect.appendChild(option);
+                    option.value = name;
+                    option.textContent = name;
+                    select.appendChild(option);
                 });
+            } catch (error) {
+                console.error('加载配置列表失败:', error);
+            }
+        }
+
+        // 保存配置按钮点击事件
+        document.getElementById('save-config-btn').addEventListener('click', async () => {
+            const name = prompt('请输入配置名称：');
+            if (!name) return;
+
+            try {
+                const config = getCurrentConfig();
+                await fetch('/api/model-configs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, config })
+                });
+                alert('配置保存成功！');
+                loadConfigList(); // 刷新配置列表
+            } catch (error) {
+                console.error('保存配置失败:', error);
+                alert('保存配置失败，请重试！');
             }
         });
+
+        // 加载配置选择事件
+        document.getElementById('load-config-select').addEventListener('change', async (e) => {
+            const name = e.target.value;
+            if (!name) return;
+
+            try {
+                const response = await fetch('/api/model-configs');
+                const data = await response.json();
+                const config = data.configs[name];
+                if (config) {
+                    applyConfig(config);
+                }
+            } catch (error) {
+                console.error('加载配置失败:', error);
+                alert('加载配置失败，请重试！');
+            }
+        });
+
+        // 获取模态框元素
+        const configModal = document.getElementById('config-modal');
+        const configButton = document.getElementById('config-button');
+        const closeButton = document.querySelector('.close');
+
+        // 初始化时加载配置列表
+        loadConfigList();
+
+        // 点击配置按钮显示模态框
+        configButton.addEventListener('click', () => {
+            configModal.style.display = 'block';
+        });
+
+        // 点击关闭按钮隐藏模态框
+        closeButton.addEventListener('click', () => {
+            configModal.style.display = 'none';
+        });
+
+        // 点击模态框外部区域关闭模态框
+        window.addEventListener('click', (event) => {
+            if (event.target === configModal) {
+                configModal.style.display = 'none';
+            }
+        });
+
+        // 初始化助手初始化模型选择
+        async function initializeAssistants() {
+            try {
+                const [configResponse, assistantsResponse] = await Promise.all([
+            fetch('/api/config'),
+            fetch('/api/assistants')
+        ]);
+        const config = await configResponse.json();
+        const assistantsData = await assistantsResponse.json();
+        
+        const modelSelect = document.getElementById('model-select');
+        const assistantSelect = document.getElementById('assistant-select');
+                // 清空现有选项
+                assistantSelect.innerHTML = '';
+                modelSelect.innerHTML = '';
+                        // 填充模型选项
+        config.models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = `${model.name}`;
+            modelSelect.appendChild(option);
+        });
+                Object.values(assistantsData.assistants).forEach(assistant => {
+                    const option = document.createElement('option');
+                    option.value = assistant.id;
+                    option.textContent = assistant.name;
+                    assistantSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('获取助手列表失败:', error);
+            }
+        }
+
+        // 页面加载时初始化助手列表
+        initializeAssistants();
 
         let conversationHistory = [];
 
         async function callAPI(message) {
             const modelType = document.getElementById('model-select').value;
+            const assistant = document.getElementById('assistant-select').value;
+            const outputFormat = document.getElementById('output-format').value;
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const topP = parseFloat(document.getElementById('top-p').value);
+            const topK = parseInt(document.getElementById('top-k').value);
+            const frequencyPenalty = parseFloat(document.getElementById('frequency-penalty').value);
+            const maxTokens = parseInt(document.getElementById('max-tokens').value);
             
-            if (modelType === 'doubao-deepseek-ai') {
-                // 通过后端服务器中转请求
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的AI助手。"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],
-                        model: "doubao-deepseek-ai",
-                        temperature: 0.8,
-                        top_p: 0.8,
-                        max_tokens: 2048
-                    })
-                });
-            }
-            else if (modelType === 'doubao-deepseek-r1-ai') {
-                // 通过后端服务器中转请求
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的ai助手"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],
-                        model: "doubao-deepseek-r1-ai",
-                        temperature: 0.8,
-                        top_p: 0.8,
-                        max_tokens: 8000
-                    })
-                });
-            }
-            else if (modelType === 'deepseek-ai/DeepSeek-R1') {
-                //硅基流动deepseekR1
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的AI助手。"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],
-                        model: "deepseek-ai/DeepSeek-R1",
-                        temperature: 0.8,
-                        top_p: 0.8,
-                        max_tokens: 4096
-                    })      
-                }); 
-                const result = await response.json();
-                if (result.choices && result.choices[0]) {
-                    return {
-                        choices: [{
-                            message: {
-                                content: result.choices[0].message.content
-                            }
-                        }]
-                    };
-                }
-                else {
-                    console.error('硅基流动deepseekR1返回错误:', result.error);
-                    return null;
-                }
-            }
-            else if (modelType === 'deepseek-ai/DeepSeek-V3') {
-                //硅基流动deepseekV3
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的AI助手。"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],    
-                        model: "deepseek-ai/DeepSeek-V3",
-                        temperature: 0.8,
-                        top_p: 0.8,
-                        max_tokens: 4096
-                    })
-                });
-                const result = await response.json();
-               if (result.choices && result.choices[0]) {
-                    return {
-                        choices: [{
-                            message: {
-                                content: result.choices[0].message.content
-                            }
-                        }]
-                    };
-                }
-                else {
-                    console.error('硅基流动deepseekV3返回错误:', result.error);
-                    return null;
-                }
-            }
-            else if (modelType === 'deepseek-tianyi-ai') {
-                // 通过后端服务器中转请求
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的AI助手。"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],
-                        model: "deepseek-tianyi-ai",
-                        temperature: 0.8,
-                        top_p: 0.8,
-                        max_tokens: 2048
-                    })
-                });
-
-                const result = await response.json();
-                if (result.choices && result.choices[0]) {
-                    return {
-                        choices: [{
-                            message: {
-                                content: result.choices[0].message.content
-                            }
-                        }]
-                    };
-                } else {
-                    console.error('天翼AI返回错误:', result.error);
-                    return null;
-                }
-            } else if (modelType === 'huawei-ai') {
-                // 通过后端服务器中转请求
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        messages: [
-                            {
-                                role: "system",
-                                content: "你是一个专业的AI助手。"
-                            },
-                            ...conversationHistory,
-                            { 
-                                role: "user", 
-                                content: message 
-                            }
-                        ],
-                        model: "huawei-ai",
-                        temperature: 1.0,
-                        max_tokens: 20
-                    })
-                });
-
-                const result = await response.json();
-                if (result.choices && result.choices[0]) {
-                    return {
-                        choices: [{
-                            message: {
-                                content: result.choices[0].message.content
-                            }
-                        }]
-                    };
-                } else {
-                    console.error('华为云AI返回错误:', result.error);
-                    return null;
-                }
-            } else if (modelType === 'google-ai') {
-                const url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=AIzaSyAxPOoOh-zAvC7FoFaxKd15E1NDGKhotAI';
-                const headers = {
-                    'Content-Type': 'application/json',
-                };
-                // gemini-2.0-flash-exp gemini-exp-1121 gemini-1.5-flash gemini-2.0-flash-thinking-exp
-               //将 conversationHistory中的message 转换为 google-ai 的格式
-               let googleaiformat = [];
-               for(let i = 0;i<conversationHistory.length;i++){
-                    let d= {
-                        "role": conversationHistory[i].role=="user"?"user":"model",
-
-                        "parts": [{"text": conversationHistory[i].content}]
-                    }  
-                    googleaiformat.push(d);
-               }
-               googleaiformat.push([{
-                        "role": "user",
-                        "parts": [{"text": message}]
-                    }]);
-                const data = {
-                    "contents":googleaiformat
-                };
-
-                try {
-                    const response = await fetch(url, { method: 'POST', headers: headers, body: JSON.stringify(data) });
-                    const result = await response.json();
-                    return result;
-                } catch (error) {
-                    console.error('Error:', error);
-                    return null;
-                }
-            }
-        }
+           }
 
         document.getElementById('send-button').addEventListener('click', async () => {
             await sendMessage();
