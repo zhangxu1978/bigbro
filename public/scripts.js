@@ -105,8 +105,12 @@ function renderTree(node, level = 0) {
 // 初始化控制面板
 async function initializeControlPanel() {
     try {
-        const response = await fetch('/api/config');
-        const config = await response.json();
+        const [configResponse, assistantsResponse] = await Promise.all([
+            fetch('/api/config'),
+            fetch('/api/assistants')
+        ]);
+        const config = await configResponse.json();
+        const assistantsData = await assistantsResponse.json();
         
         const modelSelect = document.getElementById('modelSelect');
         const assistantSelect = document.getElementById('assistantSelect');
@@ -124,21 +128,10 @@ async function initializeControlPanel() {
         });
         
         // 填充助手选项
-        Object.entries(config.systemPrompts).forEach(([id, prompt]) => {
+        Object.values(assistantsData.assistants).forEach(assistant => {
             const option = document.createElement('option');
-            option.value = id;
-            const displayName = {
-                'default': '通用助手',
-                'novel': '小说策划师',
-                'novel-character': '人物策划师',
-                'novel-timeline': '章节策划师',
-                'editor': '编辑助手',
-                'writer': '写作助手',
-                'reconstructor': '重构助手',
-                'summarizer': '总结助手'
-            }[id] || id;
-            
-            option.textContent = displayName;
+            option.value = assistant.id;
+            option.textContent = assistant.name;
             assistantSelect.appendChild(option);
         });
     } catch (error) {

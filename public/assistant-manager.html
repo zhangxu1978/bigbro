@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>助手管理</title>
+    <style>
+        .assistant-list {
+            margin: 20px;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .assistant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .assistant-info {
+            flex-grow: 1;
+        }
+        .assistant-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin:  auto;
+            padding: 20px;
+            width: 50%;
+            border-radius: 8px;
+        }
+        .close {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-group textarea {
+            height: 100px;
+        }
+        .button-group {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="assistant-list">
+            <h2>助手管理</h2>
+            <button onclick="showAddModal()" class="control-button">添加助手</button>
+            <div id="assistantList"></div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑助手的模态框 -->
+    <div id="assistantModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">添加助手</h3>
+            <form id="assistantForm">
+                <input type="hidden" id="assistantId">
+                <div class="form-group">
+                    <label for="assistantName">助手名称：</label>
+                    <input type="text" id="assistantName" required>
+                </div>
+                <div class="form-group">
+                    <label for="assistantPrompt">系统提示词：</label>
+                    <textarea id="assistantPrompt" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="markdownFormat">Markdown输出格式：</label>
+                    <textarea id="markdownFormat" placeholder="请输入Markdown格式模板"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="jsonFormat">JSON输出格式：</label>
+                    <textarea id="jsonFormat" placeholder="请输入JSON格式模板"></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="button" onclick="closeModal()" class="control-button">取消</button>
+                    <button type="submit" class="control-button">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assistant-manager.js"></script>
+</body>
+</html>

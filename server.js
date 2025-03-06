@@ -15,6 +15,79 @@ app.use(express.static('public'));
 // 读取配置文件
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'key.config'), 'utf8'));
 
+// 读取助手配置文件
+const assistantsFile = path.join(__dirname, 'data', 'assistants.json');
+let assistantsConfig = JSON.parse(fs.readFileSync(assistantsFile, 'utf8'));
+
+// 助手管理API
+app.get('/api/assistants', (req, res) => {
+    res.json(assistantsConfig);
+});
+
+app.get('/api/assistants/:id', (req, res) => {
+    const freshConfig = JSON.parse(fs.readFileSync(assistantsFile, 'utf8'));
+    const assistant = freshConfig.assistants[req.params.id];
+    if (!assistant) {
+        return res.status(404).json({ error: '助手不存在' });
+    }
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.json(assistant);
+});
+
+app.post('/api/assistants', (req, res) => {
+    const { name, prompt, markdownFormat, jsonFormat } = req.body;
+    const id = name.toLowerCase().replace(/\s+/g, '-');
+    
+    if (assistantsConfig.assistants[id]) {
+        return res.status(400).json({ error: '助手ID已存在' });
+    }
+    
+    assistantsConfig.assistants[id] = {
+        id,
+        name,
+        prompt,
+        markdownFormat: markdownFormat || '',
+        jsonFormat: jsonFormat || ''
+    };
+    
+    fs.writeFileSync(assistantsFile, JSON.stringify(assistantsConfig, null, 4));
+    res.json(assistantsConfig.assistants[id]);
+});
+
+app.put('/api/assistants/:id', (req, res) => {
+    const { name, prompt, markdownFormat, jsonFormat } = req.body;
+    const id = req.params.id;
+    
+    if (!assistantsConfig.assistants[id]) {
+        return res.status(404).json({ error: '助手不存在' });
+    }
+    
+    assistantsConfig.assistants[id] = {
+        id,
+        name,
+        prompt,
+        markdownFormat: markdownFormat || assistantsConfig.assistants[id].markdownFormat || '',
+        jsonFormat: jsonFormat || assistantsConfig.assistants[id].jsonFormat || ''
+    };
+    
+    fs.writeFileSync(assistantsFile, JSON.stringify(assistantsConfig, null, 4));
+    res.json(assistantsConfig.assistants[id]);
+});
+
+app.delete('/api/assistants/:id', (req, res) => {
+    const id = req.params.id;
+    
+    if (!assistantsConfig.assistants[id]) {
+        return res.status(404).json({ error: '助手不存在' });
+    }
+    
+    delete assistantsConfig.assistants[id];
+    fs.writeFileSync(assistantsFile, JSON.stringify(assistantsConfig, null, 4));
+    res.json({ message: '删除成功' });
+});
+
 // 确保data目录存在
 const dataDir = path.join(__dirname, 'data');
 if (!fs.existsSync(dataDir)) {
@@ -69,12 +142,39 @@ app.post('/api/node', (req, res) => {
     }
 
     // 验证父节点为书籍类型时才能添加其他类型节点
-    if (parentNode.type !== '书籍' && nodeType!== parentNode.type) {
+    if (parentNode.id!="root"&& parentNode.type !== '书籍' && nodeType!== parentNode.type) {
         return res.status(400).json({ error:parentNode.type+ '只有书籍节点才能添加其他类型的子节点' });
     }
 
+    // 生成新的节点ID
+    function generateNodeId(parentNode) {
+        if (parentNode.id === 'root') {
+            // 获取所有一级节点
+            const firstLevelNodes = data.children;
+            let maxId = 0;
+            firstLevelNodes.forEach(node => {
+                const id = parseInt(node.id);
+                if (!isNaN(id) && id > maxId) maxId = id;
+            });
+            const newId = maxId + 1;
+            return newId.toString().padStart(3, '0');
+        } else {
+            // 获取同级节点
+            const siblings = parentNode.children;
+            let maxId = 0;
+            const parentIdLength = parentNode.id.length;
+            siblings.forEach(node => {
+                const idSuffix = node.id.substring(parentIdLength);
+                const id = parseInt(idSuffix);
+                if (!isNaN(id) && id > maxId) maxId = id;
+            });
+            const newId = maxId + 1;
+            return parentNode.id + newId.toString().padStart(3, '0');
+        }
+    }
+
     const newNode = {
-        id: Date.now().toString(),
+        id: generateNodeId(parentNode),
         type: nodeType,
         text: text,
         description: description || '',
@@ -227,7 +327,7 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: '不支持的模型类型' });
         }
 
-        const systemPrompt = config.systemPrompts[assistant] || config.systemPrompts.default;
+        const systemPrompt = assistantsConfig.assistants[assistant]?.prompt || assistantsConfig.assistants.default.prompt;
         let response;
 
         switch (model.provider) {
