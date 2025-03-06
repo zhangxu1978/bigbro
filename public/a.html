@@ -652,6 +652,35 @@
             const frequencyPenalty = parseFloat(document.getElementById('frequency-penalty').value);
             const maxTokens = parseInt(document.getElementById('max-tokens').value);
             
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: modelType,
+                        assistant,
+                        message,
+                        outputFormat,
+                        temperature,
+                        topP,
+                        topK,
+                        frequencyPenalty,
+                        maxTokens
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('服务器响应错误');
+                }
+
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('调用API失败:', error);
+                throw error;
+            }
            }
 
         document.getElementById('send-button').addEventListener('click', async () => {
@@ -703,29 +732,33 @@
         }
 
         async function sendMessage() {
-            const userInput = document.getElementById('user-input').value;
-            if (userInput.trim() !== '') {
-                const responseData = await callAPI(userInput);
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            
+            if (!message) {
+                alert('请输入内容');
+                return;
+            }
+            
+            try {
+                createMessageElement('user', '你：' + message);
+                userInput.value = '';
+                adjustHeight();
+                
+                const responseData = await callAPI(message);
                 const modelType = document.getElementById('model-select').value;
-
+                
                 if (responseData) {
-                    let assistantMessage;
-
-                    if (modelType === 'google-ai') {
-                        assistantMessage = responseData.candidates[0].content.parts[0].text;
-                    } else {
-                        assistantMessage = responseData.choices[0].message.content;
-                    }
-
-                    createMessageElement('user', '你：' + userInput);
+                    let assistantMessage = typeof responseData === 'string' ? responseData : JSON.stringify(responseData);
                     createAssistantMessageElement(assistantMessage);
-
-                    conversationHistory.push({ "role": "user", "content": userInput });
+                    conversationHistory.push({ "role": "user", "content": message });
                     conversationHistory.push({ "role": "assistant", "content": assistantMessage });
                 } else {
-                    createMessageElement('error', '发生错误，无法获取响应。');
+                    throw new Error('无效的响应数据');
                 }
-                document.getElementById('user-input').value = '';
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                createMessageElement('error', '发送失败，请重试');
             }
         }
 
