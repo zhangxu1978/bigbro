@@ -1,5 +1,7 @@
 let currentParentId = null;
 let currentNodeId = null;
+let isEditing = false;
+let originalContent = '';
 
 // 获取树形数据
 async function fetchTreeData() {
@@ -41,8 +43,20 @@ function renderTree(node, level = 0) {
     checkbox.className = 'checkbox';
     checkbox.onclick = (e) => {
         e.stopPropagation();
-    };
+        const isChecked = e.target.checked;
+        
+        // 更新所有子节点的复选框状态
+        const childrenContainer = nodeElement.querySelector('.children-container');
+        if (childrenContainer) {
+            const childCheckboxes = childrenContainer.querySelectorAll('.checkbox');
+            childCheckboxes.forEach(childCheckbox => {
+                childCheckbox.checked = isChecked;
+            });
+        }
 
+        // 更新父节点的复选框状态
+        updateParentCheckboxState(nodeElement.parentElement.closest('.tree-node'));
+    };
     const textSpan = document.createElement('span');
     textSpan.textContent = `${node.text} ${node.type ? `(${node.type})` : ''}`;
 
@@ -135,13 +149,25 @@ async function initializeControlPanel() {
 // 显示添加节点模态框
 function showAddModal(parentId) {
     currentParentId = parentId;
-    document.getElementById('addNodeModal').style.display = 'block';
+    const modal = document.getElementById('addNodeModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    // 隐藏菜单和遮罩层
+    document.getElementById('nodeContextMenu').style.display = 'none';
+    const overlay = document.querySelector('.menu-overlay');
+    if (overlay) overlay.remove();
 }
 
 // 关闭模态框
 function closeModal() {
-    document.getElementById('addNodeModal').style.display = 'none';
-    document.getElementById('nodeName').value = '';
+    const modal = document.getElementById('addNodeModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('nodeName').value = '';
+    }, 300);
 }
 
 // 添加新节点
@@ -203,7 +229,16 @@ function togglePanel(side) {
 
 // 修改节点
 function editNode(nodeId) {
-    document.getElementById('editNodeModal').style.display = 'block';
+    const modal = document.getElementById('editNodeModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // 隐藏菜单和遮罩层
+    document.getElementById('nodeContextMenu').style.display = 'none';
+    const overlay = document.querySelector('.menu-overlay');
+    if (overlay) overlay.remove();
     
     // 直接通过 nodeId 找到对应的节点元素
     const nodeElement = document.querySelector(`.tree-node[data-id="${nodeId}"]`);
@@ -269,8 +304,12 @@ async function submitEditNode() {
 
 // 关闭编辑模态框
 function closeEditModal() {
-    document.getElementById('editNodeModal').style.display = 'none';
-    document.getElementById('editNodeName').value = '';
+    const modal = document.getElementById('editNodeModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+        document.getElementById('editNodeName').value = '';
+    }, 300);
 }
 // 查看节点
 async function viewNode(nodeId) {
@@ -287,6 +326,10 @@ async function viewNode(nodeId) {
             <h3>${node.text} ${node.type ? `(${node.type})` : ''}</h3>
             <p>${node.description || '暂无描述'}</p>
         `;
+        // 隐藏菜单和遮罩层
+        document.getElementById('nodeContextMenu').style.display = 'none';
+        const overlay = document.querySelector('.menu-overlay');
+        if (overlay) overlay.remove();
     } catch (error) {
         console.error('Error:', error);
         alert(error.message);
@@ -358,4 +401,79 @@ async function sendMessage() {
 document.addEventListener('DOMContentLoaded', () => {
     fetchTreeData();
     initializeControlPanel();
+});
+// 添加更新父节点复选框状态的函数
+function updateParentCheckboxState(parentNode) {
+    if (!parentNode) return;
+
+    const parentCheckbox = parentNode.querySelector('.checkbox');
+    const childrenContainer = parentNode.querySelector('.children-container');
+    
+    if (childrenContainer) {
+        const childCheckboxes = Array.from(childrenContainer.querySelectorAll('.checkbox'));
+        const allChecked = childCheckboxes.every(checkbox => checkbox.checked);
+        const allUnchecked = childCheckboxes.every(checkbox => !checkbox.checked);
+        
+        if (allChecked) {
+            parentCheckbox.checked = true;
+        } else if (allUnchecked) {
+            parentCheckbox.checked = false;
+        }
+
+        // 递归更新上层父节点
+        updateParentCheckboxState(parentNode.parentElement.closest('.tree-node'));
+    }
+}
+document.getElementById('editContentBtn').addEventListener('click', function() {
+    isEditing = true;
+    originalContent = document.getElementById('contentArea').innerHTML;
+    document.getElementById('contentArea').contentEditable = true;
+    document.getElementById('contentArea').style.border = '1px solid #ccc';
+    document.getElementById('contentArea').style.padding = '10px';
+    document.getElementById('editContentBtn').style.display = 'none';
+    document.getElementById('saveContentBtn').style.display = 'block';
+    document.getElementById('cancelContentBtn').style.display = 'block';
+});
+
+document.getElementById('saveContentBtn').addEventListener('click', async function() {
+    isEditing = false;
+    const contentArea = document.getElementById('contentArea');
+    const content = contentArea.innerHTML;
+    
+    try {
+        const response = await fetch(`/api/node/${currentNodeId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                description: content
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '保存内容失败');
+        }
+
+        contentArea.contentEditable = false;
+        contentArea.style.border = 'none';
+        contentArea.style.padding = '0';
+        document.getElementById('editContentBtn').style.display = 'block';
+        document.getElementById('saveContentBtn').style.display = 'none';
+        document.getElementById('cancelContentBtn').style.display = 'none';
+    } catch (error) {
+        console.error('Error:', error);
+        alert(error.message);
+    }
+});
+document.getElementById('cancelContentBtn').addEventListener('click', function() {
+    isEditing = false;
+    document.getElementById('contentArea').innerHTML = originalContent;
+    document.getElementById('contentArea').contentEditable = false;
+    document.getElementById('contentArea').style.border = 'none';
+    document.getElementById('contentArea').style.padding = '0';
+    document.getElementById('editContentBtn').style.display = 'block';
+    document.getElementById('saveContentBtn').style.display = 'none';
+    document.getElementById('cancelContentBtn').style.display = 'none';
 });

@@ -3,10 +3,11 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const axios = require('axios');
-
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const app = express();
 const port = 3000;
-
+const proxy = 'http://127.0.0.1:7890'; // 根据实际情况修改代理地址和端口
+const agent = new HttpsProxyAgent(proxy);
 // 中间件配置
 app.use(bodyParser.json());
 app.use(express.static('public'));
@@ -68,8 +69,8 @@ app.post('/api/node', (req, res) => {
     }
 
     // 验证父节点为书籍类型时才能添加其他类型节点
-    if (parentNode.type !== '书籍' && nodeType !== '书籍') {
-        return res.status(400).json({ error: '只有书籍节点才能添加其他类型的子节点' });
+    if (parentNode.type !== '书籍' && nodeType!== parentNode.type) {
+        return res.status(400).json({ error:parentNode.type+ '只有书籍节点才能添加其他类型的子节点' });
     }
 
     const newNode = {
@@ -150,10 +151,6 @@ app.put('/api/node/:id', (req, res) => {
             }
             // 如果提供了新的节点类型，则更新类型
             if (nodeType !== undefined) {
-                // 检查节点是否有子节点
-                if (node.children && node.children.length > 0 && nodeType !== '书籍') {
-                    return { error: '只有书籍类型的节点才能包含子节点' };
-                }
                 node.type = nodeType;
             }
             // 如果提供了新的描述，则更新描述
@@ -235,16 +232,17 @@ app.post('/api/chat', async (req, res) => {
 
         switch (model.provider) {
             case 'google':
-                response = await axios.post(`${model.apiBase}/models/${model.model}:generateContent`, {
+
+                response = await axios.post(`${model.apiBase}/models/${model.model}:generateContent?key=${model.apiKey}`, {
                     contents: [{
                         role: 'user',
                         parts: [{ text: `${systemPrompt}\n${message}` }]
                     }]
                 }, {
                     headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${model.apiKey}`
-                    }
+                        'Content-Type': 'application/json'
+                    },
+                    httpsAgent: agent, // 添加代理支持
                 });
                 res.json({ response: response.data.candidates[0].content.parts[0].text });
                 break;

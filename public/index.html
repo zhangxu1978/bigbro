@@ -17,6 +17,11 @@
             <div id="contentArea">
                 <p>请选择左侧节点查看详细信息</p>
             </div>
+            <div class="content-buttons">
+                <button id="editContentBtn" class="control-button">修改</button>
+                <button id="saveContentBtn" class="control-button" style="display: none;">保存</button>
+                <button id="cancelContentBtn" class="control-button" style="display: none;">取消</button>
+            </div>
         </div>
         <div class="right-panel-container">
             <button class="right-toggle" onclick="togglePanel('right')">▶</button>
@@ -40,7 +45,7 @@
                         <textarea id="userInput" class="control-textarea" rows="4"></textarea>
                     </div>
                     <button id="sendButton" class="control-button" onclick="sendMessage()">发送</button>
-                    <div id="responseArea" class="response-area"></div>
+                    <textarea id="responseArea" class="control-textarea" rows="4"></textarea>
                 </div>
             </div>
         </div>
