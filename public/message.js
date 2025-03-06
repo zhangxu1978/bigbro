@@ -252,7 +252,25 @@ function addMessage(role, content) {
     const contentSpan = document.createElement('span');
     contentSpan.textContent = content;
     messageDiv.appendChild(contentSpan);
-    
+         // Check for code blocks
+         const codeRegex = /```([\s\S]*?)```/g;
+         const parts = content.split(codeRegex);
+         parts.forEach((part, index) => {
+             if (index % 2 === 0) {
+                 // Regular text
+                 messageDiv.appendChild(document.createTextNode(part));
+             } else {
+                 // Code block
+                 const codePre = document.createElement('pre');
+                 codePre.textContent = part;
+                 const copyButton = document.createElement('button');
+                 copyButton.textContent = '复制';
+                 copyButton.classList.add('copy-button');
+                 copyButton.addEventListener('click', () => copyToClipboard(part));
+                 codePre.appendChild(copyButton);
+                 messageDiv.appendChild(codePre);
+             }
+         });
     // 添加删除按钮
     const deleteButton = document.createElement('button');
     deleteButton.className = 'delete-button';
@@ -263,7 +281,13 @@ function addMessage(role, content) {
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
 }
-
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('代码已复制到剪贴板');
+    }).catch(err => {
+        console.error('复制失败', err);
+    });
+}
 // 下载对话历史
 function downloadConversation() {
     const history = getConversationHistory();
