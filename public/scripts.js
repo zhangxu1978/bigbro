@@ -470,3 +470,115 @@ document.getElementById('cancelContentBtn').addEventListener('click', function()
     document.getElementById('saveContentBtn').style.display = 'none';
     document.getElementById('cancelContentBtn').style.display = 'none';
 });
+
+// 查看选中节点
+document.getElementById('viewSelectedBtn').addEventListener('click', function() {
+    showSelectedNodes();
+});
+
+// 显示选中节点的内容
+async function showSelectedNodes() {
+    const selectedNodes = [];
+    const checkboxes = document.querySelectorAll('.checkbox:checked');
+    
+    // 如果没有选中任何节点，提示用户
+    if (checkboxes.length === 0) {
+        alert('请先选择要查看的节点');
+        return;
+    }
+    
+    // 收集所有选中节点的ID
+    for (const checkbox of checkboxes) {
+        const nodeElement = checkbox.closest('.tree-node');
+        const nodeId = nodeElement.getAttribute('data-id');
+        
+        try {
+            // 获取节点详细信息
+            const response = await fetch(`/api/node/${nodeId}`);
+            if (!response.ok) {
+                console.error(`获取节点 ${nodeId} 失败`);
+                continue;
+            }
+            
+            const nodeData = await response.json();
+            selectedNodes.push(nodeData);
+        } catch (error) {
+            console.error(`获取节点 ${nodeId} 时出错:`, error);
+        }
+    }
+    
+    // 按照ID排序，确保层级关系正确
+    selectedNodes.sort((a, b) => a.id.localeCompare(b.id));
+    
+    // 生成Markdown内容
+    const markdownContent = generateMarkdownContent(selectedNodes);
+    
+    // 显示模态窗口
+    const modal = document.getElementById('viewSelectedModal');
+    document.getElementById('selectedNodesContent').innerHTML = markdownContent;
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+// 生成Markdown内容
+function generateMarkdownContent(nodes) {
+    let markdown = '';
+    
+    // 创建节点ID到层级的映射
+    const idToLevel = {};
+    nodes.forEach(node => {
+        // 根据ID长度和格式确定层级
+        const level = calculateNodeLevel(node.id);
+        idToLevel[node.id] = level;
+    });
+    
+    // 按层级生成Markdown
+    nodes.forEach(node => {
+        const level = idToLevel[node.id];
+        const headingLevel = Math.min(level + 1, 6); // 最大支持h6
+        
+        // 添加标题
+        markdown += `${'#'.repeat(headingLevel)} ${node.text} ${node.type ? `(${node.type})` : ''}\n\n`;
+        
+        // 添加描述
+        if (node.description && node.description.trim()) {
+            markdown += `${node.description}\n\n`;
+        } else {
+            markdown += `暂无描述\n\n`;
+        }
+    });
+    
+    return markdown;
+}
+
+// 计算节点层级
+function calculateNodeLevel(nodeId) {
+    if (nodeId === 'root') return 0;
+    
+    // 根据ID的长度和格式确定层级
+    // 假设一级节点ID是3位数字，每一级子节点在父节点ID后添加3位数字
+    return Math.ceil(nodeId.length / 3);
+}
+
+// 关闭查看选中节点的模态窗口
+function closeViewSelectedModal() {
+    const modal = document.getElementById('viewSelectedModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+}
+
+// 复制选中节点内容到剪贴板
+async function copySelectedContent() {
+    const content = document.getElementById('selectedNodesContent').innerHTML;
+    try {
+        await navigator.clipboard.writeText(content);
+        alert('内容已复制到剪贴板');
+    } catch (err) {
+        console.error('复制失败:', err);
+        alert('复制失败，请手动复制');
+    }
+}

@@ -13,15 +13,17 @@
             <div id="treeContainer"></div>
         </div>
         <div class="middle-panel">
-            <div class="panel-title">内容区域</div>
-            <div id="contentArea">
-                <p>请选择左侧节点查看详细信息</p>
-            </div>
-            <div class="content-buttons">
+            <div class="panel-title">            
+                <div class="content-buttons">
                 <button id="editContentBtn" class="control-button">修改</button>
                 <button id="saveContentBtn" class="control-button" style="display: none;">保存</button>
                 <button id="cancelContentBtn" class="control-button" style="display: none;">取消</button>
+                <button id="viewSelectedBtn" class="control-button">查看选择</button>
+            </div></div>
+            <div id="contentArea">
+                <p>请选择左侧节点查看详细信息</p>
             </div>
+
         </div>
         <div class="right-panel-container">
             <button class="right-toggle" onclick="togglePanel('right')">▶</button>
@@ -104,6 +106,17 @@
         <div class="context-menu-item" onclick="viewNode(currentNodeId)">查看节点</div>
         <div class="context-menu-item" onclick="editNode(currentNodeId)">修改节点</div>
         <div class="context-menu-item" onclick="deleteNode(currentNodeId)">删除节点</div>
+    </div>
+
+    <div class="modal" id="viewSelectedModal">
+        <div class="modal-content">
+            <h3>选中节点内容</h3>
+            <div id="selectedNodesContent" class="markdown-content"></div>
+            <div class="button-group">
+                <button onclick="copySelectedContent()" class="control-button">复制</button>
+                <button onclick="closeViewSelectedModal()" class="control-button">关闭</button>
+            </div>
+        </div>
     </div>
 
     <script src="scripts.js"></script>
