@@ -370,7 +370,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 20px;
+    margin-top: 2px;
 }
 
 .panel-title {
@@ -459,5 +459,46 @@ body {
 
 .config-button:hover {
     background-color: #0056b3;
+}
+.save-config-btn, .delete-config-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.save-config-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.save-config-btn:hover {
+    background-color: #45a049;
+}
+
+.delete-config-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-config-btn:hover {
+    background-color: #c82333;
+}
+
+.config-input {
+    width: 100%;
+    padding: 8px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.config-input:focus {
+    outline: none;
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
 }
 /* ... 将原有style标签中的所有CSS内容复制到这里 ... */

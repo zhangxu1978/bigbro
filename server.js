@@ -331,6 +331,21 @@ app.get('/api/model-configs', (req, res) => {
     res.json(modelConfigs);
 });
 
+// 删除模型配置
+app.delete('/api/model-configs/:name', (req, res) => {
+    const configName = req.params.name;
+    const modelConfigs = readModelConfigs();
+    
+    if (!modelConfigs.configs[configName]) {
+        return res.status(404).json({ error: '配置不存在' });
+    }
+    
+    delete modelConfigs.configs[configName];
+    fs.writeFileSync(modelConfigsFile, JSON.stringify(modelConfigs, null, 2));
+    
+    res.json({ message: '配置删除成功' });
+});
+
 // 修改 API 配置路由
 app.get('/api/config', (req, res) => {
     // 返回不包含敏感信息的配置

@@ -119,6 +119,7 @@
                     </select>
                 </div>
                 <button id="save-config-btn" class="save-config-btn">保存当前配置</button>
+                <button id="delete-config-btn" class="delete-config-btn">删除当前配置</button>
             </div>
             <div class="config-form">
                 <div class="form-group">
@@ -155,6 +156,19 @@
                     <label for="max-tokens">Max Tokens：<span id="max-tokens-value">2048</span></label>
                     <input type="range" id="max-tokens" min="1" max="8000" step="1" value="2048">
                 </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal" id="save-config-modal">
+        <div class="modal-content">
+            <h3>保存配置</h3>
+            <div class="form-group">
+                <label for="config-name">配置名称：</label>
+                <input type="text" id="config-name" class="config-input">
+            </div>
+            <div class="button-group">
+                <button onclick="saveConfigWithName()" class="control-button primary">保存</button>
+                <button onclick="closeSaveConfigModal()" class="control-button secondary">取消</button>
             </div>
         </div>
     </div>

@@ -651,10 +651,35 @@ async function loadConfig() {
 
 // 保存配置
 async function saveConfig() {
-    const configName = prompt('请输入配置名称：');
-    if (!configName) return;
+    const select = document.getElementById('load-config-select');
+    const selectedConfig = select.value;
+    let configName;
     
-    const config = getCurrentConfig();
+    if (selectedConfig) {
+        // 如果已选择配置，询问是否覆盖
+        if (!confirm(`是否要覆盖配置"${selectedConfig}"？`)) {
+            // 如果不覆盖，询问新的配置名称
+            configName = prompt('请输入新的配置名称：');
+            if (!configName) return;
+        } else {
+            configName = selectedConfig;
+        }
+    } else {
+        // 如果没有选择配置，直接询问新的配置名称
+        configName = prompt('请输入配置名称：');
+        if (!configName) return;
+    }
+    
+    const config = {
+        model: document.getElementById('model-select').value,
+        assistant: document.getElementById('assistant-select').value,
+        outputFormat: document.getElementById('output-format').value,
+        temperature: parseFloat(document.getElementById('temperature').value),
+        topP: parseFloat(document.getElementById('top-p').value),
+        topK: parseInt(document.getElementById('top-k').value),
+        frequencyPenalty: parseFloat(document.getElementById('frequency-penalty').value),
+        maxTokens: parseInt(document.getElementById('max-tokens').value)
+    };
     
     try {
         const response = await fetch('/api/model-configs', {
@@ -670,9 +695,13 @@ async function saveConfig() {
         
         if (response.ok) {
             alert('配置保存成功！');
-            loadModelConfigs(); // 重新加载配置列表
+            // 重新加载配置列表
+            await loadModelConfigs();
+            // 选中新保存/更新的配置
+            document.getElementById('load-config-select').value = configName;
         } else {
-            alert('配置保存失败！');
+            const error = await response.json();
+            alert(`配置保存失败：${error.message || '未知错误'}`);
         }
     } catch (error) {
         console.error('保存配置失败:', error);
@@ -727,4 +756,45 @@ async function initializePage() {
 
     // 添加配置选择的change事件监听
     document.getElementById('load-config-select').addEventListener('change', loadConfig);
+    
+    // 添加保存配置按钮事件监听
+    document.getElementById('save-config-btn').addEventListener('click', saveConfig);
+    
+    // 添加删除配置按钮事件监听
+    document.getElementById('delete-config-btn').addEventListener('click', deleteConfig);
+}
+
+// 删除配置
+async function deleteConfig() {
+    const select = document.getElementById('load-config-select');
+    const configName = select.value;
+    
+    if (!configName) {
+        alert('请先选择要删除的配置');
+        return;
+    }
+    
+    if (!confirm(`确定要删除配置"${configName}"吗？`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/model-configs/${encodeURIComponent(configName)}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            alert('配置删除成功！');
+            // 重新加载配置列表
+            await loadModelConfigs();
+            // 清空选择
+            select.value = '';
+        } else {
+            const error = await response.json();
+            alert(`配置删除失败：${error.message || '未知错误'}`);
+        }
+    } catch (error) {
+        console.error('删除配置失败:', error);
+        alert('配置删除失败！');
+    }
 }
