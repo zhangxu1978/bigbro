@@ -515,7 +515,19 @@ async function showSelectedNodes() {
     
     // 显示模态窗口
     const modal = document.getElementById('viewSelectedModal');
-    document.getElementById('selectedNodesContent').innerHTML = markdownContent;
+    const contentElement = document.getElementById('selectedNodesContent');
+    contentElement.innerHTML = markdownContent;
+    
+    // 计算字数
+    const textContent = contentElement.textContent;
+    const charCount = textContent.replace(/\s/g, '').length;
+    
+    // 添加字数统计
+    const countElement = document.createElement('div');
+    countElement.className = 'char-count';
+    countElement.textContent = `字数统计：${charCount} 字`;
+    contentElement.insertAdjacentElement('afterend', countElement);
+    
     modal.style.display = 'block';
     setTimeout(() => {
         modal.classList.add('show');
@@ -568,6 +580,11 @@ function closeViewSelectedModal() {
     modal.classList.remove('show');
     setTimeout(() => {
         modal.style.display = 'none';
+        // 清除字数统计元素
+        const countElement = modal.querySelector('.char-count');
+        if (countElement) {
+            countElement.remove();
+        }
     }, 300);
 }
 
