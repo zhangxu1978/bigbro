@@ -102,42 +102,6 @@ function renderTree(node, level = 0) {
     return nodeElement;
 }
 
-// 初始化控制面板
-async function initializeControlPanel() {
-    try {
-        const [configResponse, assistantsResponse] = await Promise.all([
-            fetch('/api/config'),
-            fetch('/api/assistants')
-        ]);
-        const config = await configResponse.json();
-        const assistantsData = await assistantsResponse.json();
-        
-        const modelSelect = document.getElementById('modelSelect');
-        const assistantSelect = document.getElementById('assistantSelect');
-        
-        // 清空现有选项
-        modelSelect.innerHTML = '';
-        assistantSelect.innerHTML = '';
-        
-        // 填充模型选项
-        config.models.forEach(model => {
-            const option = document.createElement('option');
-            option.value = model.id;
-            option.textContent = `${model.name}`;
-            modelSelect.appendChild(option);
-        });
-        
-        // 填充助手选项
-        Object.values(assistantsData.assistants).forEach(assistant => {
-            const option = document.createElement('option');
-            option.value = assistant.id;
-            option.textContent = assistant.name;
-            assistantSelect.appendChild(option);
-        });
-    } catch (error) {
-        console.error('初始化控制面板失败:', error);
-    }
-}
 
 // 显示添加节点模态框
 function showAddModal(parentId) {
@@ -393,30 +357,20 @@ async function sendMessage() {
 // 初始化加载
 document.addEventListener('DOMContentLoaded', () => {
     fetchTreeData();
-    initializeControlPanel();
-});
-// // 添加更新父节点复选框状态的函数
-// function updateParentCheckboxState(parentNode) {
-//     if (!parentNode) return;
-
-//     const parentCheckbox = parentNode.querySelector('.checkbox');
-//     const childrenContainer = parentNode.querySelector('.children-container');
+    initializePage();
     
-//     if (childrenContainer) {
-//         const childCheckboxes = Array.from(childrenContainer.querySelectorAll('.checkbox'));
-//         const allChecked = childCheckboxes.every(checkbox => checkbox.checked);
-//         const allUnchecked = childCheckboxes.every(checkbox => !checkbox.checked);
-        
-//         if (allChecked) {
-//             parentCheckbox.checked = true;
-//         } else if (allUnchecked) {
-//             parentCheckbox.checked = false;
-//         }
+    const configButton = document.getElementById('config-button');
+    const configModal = document.getElementById('config-modal');
+    const closeButton = configModal.querySelector('.close');
 
-//         // 递归更新上层父节点
-//         updateParentCheckboxState(parentNode.parentElement.closest('.tree-node'));
-//     }
-// }
+    configButton.onclick = () => configModal.style.display = 'block';
+    closeButton.onclick = () => configModal.style.display = 'none';
+    window.onclick = (event) => {
+        if (event.target === configModal) {
+            configModal.style.display = 'none';
+        }
+    };
+});
 document.getElementById('editContentBtn').addEventListener('click', function() {
     isEditing = true;
     originalContent = document.getElementById('contentArea').innerHTML;
@@ -518,11 +472,11 @@ async function showSelectedNodes() {
     const contentElement = document.getElementById('selectedNodesContent');
     contentElement.innerHTML = markdownContent;
     
-    // 计算字数
+    // 计算字数统计值
     const textContent = contentElement.textContent;
     const charCount = textContent.replace(/\s/g, '').length;
     
-    // 添加字数统计
+    // 添加字数统计值
     const countElement = document.createElement('div');
     countElement.className = 'char-count';
     countElement.textContent = `字数统计：${charCount} 字`;
@@ -598,4 +552,179 @@ async function copySelectedContent() {
         console.error('复制失败:', err);
         alert('复制失败，请手动复制');
     }
+}
+
+// 更新滑块值显示
+function updateSliderValue(sliderId, valueId) {
+    const slider = document.getElementById(sliderId);
+    const valueSpan = document.getElementById(valueId);
+    valueSpan.textContent = slider.value;
+    slider.oninput = function() {
+        valueSpan.textContent = this.value;
+    }
+}
+
+// 初始化所有滑块
+updateSliderValue('temperature', 'temperature-value');
+updateSliderValue('top-p', 'top-p-value');
+updateSliderValue('top-k', 'top-k-value');
+updateSliderValue('frequency-penalty', 'frequency-penalty-value');
+updateSliderValue('max-tokens', 'max-tokens-value');
+
+// 获取当前配置
+function getCurrentConfig() {
+    return {
+        model: document.getElementById('model-select').value,
+        assistant: document.getElementById('assistant-select').value,
+        outputFormat: document.getElementById('output-format').value,
+        temperature: document.getElementById('temperature').value,
+        topP: document.getElementById('top-p').value,
+        topK: document.getElementById('top-k').value,
+        frequencyPenalty: document.getElementById('frequency-penalty').value,
+        maxTokens: document.getElementById('max-tokens').value
+    };
+}
+
+// 加载模型配置
+async function loadModelConfigs() {
+    try {
+        const response = await fetch('/api/model-configs');
+        const data = await response.json();
+        const select = document.getElementById('load-config-select');
+        
+        // 清除现有选项
+        while (select.firstChild) {
+            select.removeChild(select.firstChild);
+        }
+        
+        // 添加默认选项
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '选择已保存的配置...';
+        select.appendChild(defaultOption);
+        
+        // 添加保存的配置
+        for (const name in data.configs) {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        }
+    } catch (error) {
+        console.error('加载模型配置失败:', error);
+    }
+}
+
+// 加载配置
+async function loadConfig() {
+    const select = document.getElementById('load-config-select');
+    const configName = select.value;
+    
+    if (!configName) return;
+    
+    try {
+        const response = await fetch('/api/model-configs');
+        const data = await response.json();
+        const config = data.configs[configName];
+        
+        if (config) {
+            document.getElementById('model-select').value = config.model || '';
+            document.getElementById('assistant-select').value = config.assistant || '';
+            document.getElementById('output-format').value = config.outputFormat || 'text';
+            document.getElementById('temperature').value = config.temperature || 0.8;
+            document.getElementById('top-p').value = config.topP || 0.8;
+            document.getElementById('top-k').value = config.topK || 50;
+            document.getElementById('frequency-penalty').value = config.frequencyPenalty || 0;
+            document.getElementById('max-tokens').value = config.maxTokens || 2048;
+            
+            // 更新滑块显示值
+            updateSliderValue('temperature', 'temperature-value');
+            updateSliderValue('top-p', 'top-p-value');
+            updateSliderValue('top-k', 'top-k-value');
+            updateSliderValue('frequency-penalty', 'frequency-penalty-value');
+            updateSliderValue('max-tokens', 'max-tokens-value');
+        }
+    } catch (error) {
+        console.error('加载配置失败:', error);
+    }
+}
+
+// 保存配置
+async function saveConfig() {
+    const configName = prompt('请输入配置名称：');
+    if (!configName) return;
+    
+    const config = getCurrentConfig();
+    
+    try {
+        const response = await fetch('/api/model-configs', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: configName,
+                config: config
+            })
+        });
+        
+        if (response.ok) {
+            alert('配置保存成功！');
+            loadModelConfigs(); // 重新加载配置列表
+        } else {
+            alert('配置保存失败！');
+        }
+    } catch (error) {
+        console.error('保存配置失败:', error);
+        alert('配置保存失败！');
+    }
+}
+
+// 加载模型列表
+async function loadModels() {
+    try {
+        const response = await fetch('/api/config');
+        const data = await response.json();
+        const select = document.getElementById('model-select');
+        
+        data.models.forEach(model => {
+            const option = document.createElement('option');
+            option.value = model.id;
+            option.textContent = `${model.name} (${model.provider})`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('加载模型列表失败:', error);
+    }
+}
+
+// 加载助手列表
+async function loadAssistants() {
+    try {
+        const response = await fetch('/api/assistants');
+        const data = await response.json();
+        const select = document.getElementById('assistant-select');
+        
+        for (const id in data.assistants) {
+            const assistant = data.assistants[id];
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = assistant.name;
+            select.appendChild(option);
+        }
+    } catch (error) {
+        console.error('加载助手列表失败:', error);
+    }
+}
+
+// 初始化页面
+async function initializePage() {
+    await Promise.all([
+        loadModels(),
+        loadAssistants(),
+        loadModelConfigs()
+    ]);
+
+    // 添加配置选择的change事件监听
+    document.getElementById('load-config-select').addEventListener('change', loadConfig);
 }

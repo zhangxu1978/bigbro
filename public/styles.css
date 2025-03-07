@@ -236,10 +236,19 @@ body {
     width: 100%;
     height: 100%;
     background-color: rgba(0,0,0,0.5);
-    z-index: 1000;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
+    z-index: 9999;
 }
+
+.modal-content {
+    position: relative;
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 20px;
+    width: 50%;
+    border-radius: 8px;
+    z-index: 10000;
+}
+
 
 .modal.show {
     opacity: 1;
@@ -420,5 +429,20 @@ body {
     font-size: 14px;
     color: #666;
     text-align: right;
+}
+.config-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-right: 10px;
+    transition: all 0.3s ease;
+}
+
+.config-button:hover {
+    background-color: #0056b3;
 }
 /* ... 将原有style标签中的所有CSS内容复制到这里 ... */
