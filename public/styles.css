@@ -344,8 +344,15 @@ body {
 }
   
 
+.config-form {
+    margin-top: 1px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2px;
+}
+
 .form-group {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
@@ -356,6 +363,14 @@ body {
 .form-group select, .form-group input {
     width: 100%;
     padding: 5px;
+}
+
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
 }
 
 .panel-title {
