@@ -426,6 +426,57 @@ app.post('/api/chat', async (req, res) => {
     }
 });
 
+// 自动生成下级节点
+app.post('/api/auto-generate-children', (req, res) => {
+    const { parentId, text } = req.body;
+    const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
+    // 查找父节点
+    function findParentNode(node) {
+        if (node.id === parentId) {
+            return node;
+        }
+        for (let child of node.children) {
+            const found = findParentNode(child);
+            if (found) return found;
+        }
+        return null;
+    }
+
+    const parentNode = findParentNode(data);
+    if (!parentNode) {
+        return res.status(404).json({ error: '父节点未找到' });
+    }
+
+    // 提取文本中的{}内容并解析JSON
+    const matches = text.match(/\{([^}]+)\}/g);
+    if (!matches) {
+        return res.status(400).json({ error: '未找到有效的{}格式内容' });
+    }
+
+    const newNodes = matches.map(match => {
+        try {
+            const jsonContent = JSON.parse(match);
+            if (!jsonContent.type || !jsonContent.text) {
+                throw new Error('缺少必要的字段');
+            }
+            return {
+                id: generateNodeId(parentNode),
+                type: jsonContent.type,
+                text: jsonContent.text,
+                description: jsonContent.description || '',
+                children: []
+            };
+        } catch (error) {
+            throw new Error('JSON格式不正确或缺少必要字段');
+        }
+    });
+
+    parentNode.children.push(...newNodes);
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+    res.json(newNodes);
+});
+
 app.listen(port, () => {
     console.log(`服务器运行在 http://localhost:${port}`);
 })
