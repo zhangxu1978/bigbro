@@ -28,8 +28,12 @@ function renderAssistants(assistants) {
         const actions = document.createElement('div');
         actions.className = 'assistant-actions';
         actions.innerHTML = `
-            <button onclick="editAssistant('${assistant.id}')" class="control-button">编辑</button>
-            <button onclick="deleteAssistant('${assistant.id}')" class="control-button">删除</button>
+            <button onclick="editAssistant('${assistant.id}')" class="icon-button edit-button" title="编辑">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button onclick="deleteAssistant('${assistant.id}')" class="icon-button delete-button" title="删除">
+                <i class="fas fa-trash"></i>
+            </button>
         `;
 
         item.appendChild(info);
@@ -40,11 +44,14 @@ function renderAssistants(assistants) {
 
 // 显示添加助手模态框
 function showAddModal() {
+    const modal = document.getElementById('assistantModal');
+    modal.style.display = 'flex';  // 改为 flex 布局
     document.getElementById('modalTitle').textContent = '添加助手';
     document.getElementById('assistantId').value = '';
     document.getElementById('assistantName').value = '';
     document.getElementById('assistantPrompt').value = '';
-    document.getElementById('assistantModal').style.display = 'block';
+    document.getElementById('markdownFormat').value = '';
+    document.getElementById('jsonFormat').value = '';
 }
 
 // 显示编辑助手模态框
@@ -140,13 +147,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 点击模态框外部关闭
+    const modal = document.getElementById('assistantModal');
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
 });
 
 // 将所有事件处理函数添加到window对象
-window.showAddModal = showAddModal;
-window.closeModal = closeModal;
-window.editAssistant = editAssistant;
-window.deleteAssistant = deleteAssistant;
 window.showAddModal = showAddModal;
 window.closeModal = closeModal;
 window.editAssistant = editAssistant;
