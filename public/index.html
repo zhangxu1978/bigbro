@@ -9,16 +9,19 @@
 <body>
     <div class="container">
         <div class="left-panel">
+           
             <div class="panel-title">节点树</div>
+           
             <div id="treeContainer"></div>
         </div>
         <div class="middle-panel">
             <div class="panel-title">            
                 <div class="content-buttons">
-                <button id="editContentBtn" class="control-button">修改</button>
-                <button id="saveContentBtn" class="control-button" style="display: none;">保存</button>
-                <button id="cancelContentBtn" class="control-button" style="display: none;">取消</button>
+                <button id="editContentBtn" class="config-button">修改</button>
+                <button id="saveContentBtn" class="save-config-btn" style="display: none;">保存</button>
+                <button id="cancelContentBtn" class="delete-config-btn" style="display: none;">取消</button>
                 <button id="viewSelectedBtn" class="control-button">查看选择</button>
+                <button id="config-button" class="config-button">模型配置</button>
             </div></div>
             <div id="contentArea">
                 <p>请选择左侧节点查看详细信息</p>
@@ -30,7 +33,7 @@
             <div class="right-panel">
                 <div class="panel-title">控制面板</div>
                 <div class="control-panel-content">
-                    <button id="config-button" class="config-button">模型配置</button>
+                  
                     <div class="form-group">
                         <label>输入内容：</label>
                         <textarea id="userInput" class="control-textarea" rows="4"></textarea>
