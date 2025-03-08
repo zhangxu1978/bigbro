@@ -350,6 +350,9 @@ async function sendMessage() {
         
         const data = await response.json();
         responseArea.textContent = data.response;
+        
+        // 清空输入框
+        document.getElementById('userInput').value = '';
     } catch (error) {
         console.error('发送消息失败:', error);
         responseArea.textContent = '发送失败，请重试';
@@ -372,6 +375,9 @@ document.addEventListener('DOMContentLoaded', () => {
             configModal.style.display = 'none';
         }
     };
+
+    // 添加控制面板按钮事件监听
+    document.getElementById('control-panel-button').addEventListener('click', openControlPanel);
 });
 document.getElementById('editContentBtn').addEventListener('click', function() {
     isEditing = true;
@@ -837,6 +843,14 @@ async function initializePage() {
     
     // 添加输出格式变化事件监听
     document.getElementById('output-format').addEventListener('change', updateOutputFormat);
+}
+
+function openControlPanel() {
+    document.getElementById('control-panel-modal').style.display = 'block';
+}
+
+function closeControlPanel() {
+    document.getElementById('control-panel-modal').style.display = 'none';
 }
 
 // 删除配置

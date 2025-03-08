@@ -22,25 +22,10 @@
                 <button id="cancelContentBtn" class="delete-config-btn" style="display: none;">取消</button>
                 <button id="viewSelectedBtn" class="control-button">查看选择</button>
                 <button id="config-button" class="config-button">模型配置</button>
+                <button id="control-panel-button" class="config-button">控制面板</button>
             </div></div>
             <div id="contentArea">
                 <p>请选择左侧节点查看详细信息</p>
-            </div>
-
-        </div>
-        <div class="right-panel-container">
-            <button class="right-toggle" onclick="togglePanel('right')">▶</button>
-            <div class="right-panel">
-                <div class="panel-title">控制面板</div>
-                <div class="control-panel-content">
-                  
-                    <div class="form-group">
-                        <label>输入内容：</label>
-                        <textarea id="userInput" class="control-textarea" rows="4"></textarea>
-                    </div>
-                    <button id="sendButton" class="control-button" onclick="sendMessage()">发送</button>
-                    <textarea id="responseArea" class="control-textarea" rows="4"></textarea>
-                </div>
             </div>
         </div>
     </div>
@@ -173,6 +158,21 @@
             </div>
         </div>
     </div>
+    <div class="modal" id="control-panel-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeControlPanel()">&times;</span>
+            <h3>控制面板</h3>
+            <div class="control-panel-content">
+                <div class="form-group">
+                    <label>输入内容：</label>
+                    <textarea id="userInput" class="control-textarea" rows="4"></textarea>
+                </div>
+                <button id="sendButton" class="control-button" onclick="sendMessage()">发送</button>
+                <textarea id="responseArea" class="control-textarea" rows="4"></textarea>
+            </div>
+        </div>
+    </div>
+
     <script src="./scripts/scripts.js"></script>
 </body>
 </html>
