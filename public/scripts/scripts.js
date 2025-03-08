@@ -321,9 +321,10 @@ async function deleteNode(nodeId) {
 
 // 发送消息到AI
 async function sendMessage() {
+    const userInput = document.getElementById('user-input');
     const model = document.getElementById('model-select').value;
     const assistant = document.getElementById('assistant-select').value;
-    const message = document.getElementById('userInput').value;
+    const message = userInput.value.trim();
     const responseArea = document.getElementById('responseArea');
     const systemPrompt = document.getElementById('system-prompt').value;
     
@@ -331,10 +332,11 @@ async function sendMessage() {
         alert('请输入内容');
         return;
     }
-    
+        // 添加用户消息到界面
+        addMessage('user', message);
+        userInput.value = '';
     try {
-        responseArea.textContent = '正在思考...';
-        
+
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
@@ -344,15 +346,21 @@ async function sendMessage() {
                 model,
                 assistant,
                 systemPrompt,
-                message
+                message,
+                conversationHistory: getConversationHistory()
             })
         });
         
-        const data = await response.json();
-        responseArea.textContent = data.response;
+      //  const data = await response.json();
+       // responseArea.textContent = data.response;
         
-        // 清空输入框
-        document.getElementById('userInput').value = '';
+        if (response.ok) {
+            const data = await response.json();
+            addMessage('assistant', data.response);
+        } else {
+            const error = await response.json();
+            addMessage('assistant', `错误: ${error.error}`);
+        }
     } catch (error) {
         console.error('发送消息失败:', error);
         responseArea.textContent = '发送失败，请重试';
@@ -886,4 +894,59 @@ async function deleteConfig() {
         console.error('删除配置失败:', error);
         alert('配置删除失败！');
     }
+}
+
+// 获取对话历史
+function getConversationHistory() {
+    const container = document.getElementById('response-container');
+    const messages = [];
+    
+    for (const element of container.children) {
+        const role = element.getAttribute('role');
+        const contentSpan = element.querySelector('span');
+        const content = contentSpan ? contentSpan.textContent : '';
+        if (role && content) {
+            messages.push({ role, content });
+        }
+    }
+    
+    return messages;
+}
+
+
+    // 添加消息到界面
+    function addMessage(role, content) {
+        const container = document.getElementById('response-container');
+        const messageDiv = document.createElement('div');
+        messageDiv.setAttribute('role', role);
+        
+        // 处理代码块和普通文本
+        const codeRegex = /```([\s\S]*?)```/g;
+        const parts = content.split(codeRegex);
+        parts.forEach((part, index) => {
+            if (index % 2 === 0) {
+                // Regular text
+                messageDiv.appendChild(document.createTextNode(part));
+            } else {
+                // Code block
+                const codePre = document.createElement('pre');
+                codePre.textContent = part;
+                const copyButton = document.createElement('button');
+                copyButton.textContent = '复制';
+                copyButton.classList.add('copy-button');
+                copyButton.addEventListener('click', () => copyToClipboard(part));
+                codePre.appendChild(copyButton);
+                messageDiv.appendChild(codePre);
+            }
+        });
+
+    // 添加删除按钮
+    const deleteButton = document.createElement('button');
+    deleteButton.className = 'delete-button';
+    deleteButton.textContent = 'x';
+    deleteButton.onclick = () => messageDiv.remove();
+    messageDiv.appendChild(deleteButton);
+    
+    container.appendChild(messageDiv);
+    container.scrollTop = container.scrollHeight;
 }
