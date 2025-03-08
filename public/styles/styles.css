@@ -186,6 +186,25 @@ body {
 #viewSelectedModal .modal-content {
     max-width: 700px;
     width: 80%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#viewSelectedModal .markdown-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-bottom: 20px;
+}
+
+#viewSelectedModal .button-group {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+    margin-top: auto;
 }
 .context-menu {
     display: none;

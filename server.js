@@ -363,7 +363,7 @@ app.get('/api/config', (req, res) => {
 
 // 修改聊天 API 路由
 app.post('/api/chat', async (req, res) => {
-    const { model: modelId, assistant, message, conversationHistory = [] } = req.body;
+    const { model: modelId, assistant, message, systemPrompt, conversationHistory = [] } = req.body;
     
     try {
         const model = config.models.find(m => m.id === modelId);
@@ -371,20 +371,27 @@ app.post('/api/chat', async (req, res) => {
             return res.status(400).json({ error: '不支持的模型类型' });
         }
 
-        const systemPrompt = assistantsConfig.assistants[assistant]?.prompt || assistantsConfig.assistants.default.prompt;
+        // 优先使用传入的系统提示词，如果没有则使用助手默认的提示词
+        const defaultSystemPrompt = assistantsConfig.assistants[assistant]?.prompt || assistantsConfig.assistants.default.prompt;
+        const finalSystemPrompt = systemPrompt || defaultSystemPrompt;
+        
         let response;
         
         // 构建完整的对话历史
         const messages = [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory
-          //  { role: 'user', content: message }
+            { role: 'system', content: finalSystemPrompt },
+            ...conversationHistory,
+            { role: 'user', content: message }
         ];
-
+        // 构建完整的对话历史
+        const messagesGoogle = [
+            { role: 'system', content: finalSystemPrompt },
+            ...conversationHistory
+        ];
         switch (model.provider) {
             case 'google':
                 // 转换对话历史为Google API格式
-                const contents = messages.map(msg => ({
+                const contents = messagesGoogle.map(msg => ({
                     role: msg.role === 'system' ? 'user' : msg.role === 'assistant' ? 'model' : 'user',
                     parts: [{ text: msg.content }]
                 }));

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>知识管理系统</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="./styles/styles.css">
 </head>
 <body>
     <div class="container">
@@ -122,23 +122,21 @@
                 <button id="delete-config-btn" class="delete-config-btn">删除当前配置</button>
             </div>
             <div class="config-form">
-                <div class="form-group">
-                    <label for="model-select">选择模型：</label>
+                <div class="form-actions">
+   
                     <select id="model-select">
                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="assistant-select">选择助手：</label>
+
                     <select id="assistant-select">
                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="output-format">输出格式：</label>
                     <select id="output-format">
                         <option value="text">文本</option>
                         <option value="markdown">Markdown</option>
                         <option value="json">JSON</option>
                     </select>
+                </div>
+                <div class="form-actions">
+                  <textarea id="system-prompt" class="control-textarea" rows="4"></textarea>
                 </div>
                 <div class="form-actions">
                     <label for="temperature">Temperature：<span id="temperature-value">0.8</span></label>
@@ -172,6 +170,6 @@
             </div>
         </div>
     </div>
-    <script src="scripts.js"></script>
+    <script src="./scripts/scripts.js"></script>
 </body>
 </html>

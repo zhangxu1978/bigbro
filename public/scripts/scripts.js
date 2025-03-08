@@ -321,10 +321,11 @@ async function deleteNode(nodeId) {
 
 // 发送消息到AI
 async function sendMessage() {
-    const model = document.getElementById('modelSelect').value;
-    const assistant = document.getElementById('assistantSelect').value;
+    const model = document.getElementById('model-select').value;
+    const assistant = document.getElementById('assistant-select').value;
     const message = document.getElementById('userInput').value;
     const responseArea = document.getElementById('responseArea');
+    const systemPrompt = document.getElementById('system-prompt').value;
     
     if (!message.trim()) {
         alert('请输入内容');
@@ -342,6 +343,7 @@ async function sendMessage() {
             body: JSON.stringify({
                 model,
                 assistant,
+                systemPrompt,
                 message
             })
         });
@@ -577,6 +579,7 @@ function getCurrentConfig() {
         model: document.getElementById('model-select').value,
         assistant: document.getElementById('assistant-select').value,
         outputFormat: document.getElementById('output-format').value,
+        systemPrompt: document.getElementById('system-prompt').value,
         temperature: document.getElementById('temperature').value,
         topP: document.getElementById('top-p').value,
         topK: document.getElementById('top-k').value,
@@ -631,6 +634,7 @@ async function loadConfig() {
             document.getElementById('model-select').value = config.model || '';
             document.getElementById('assistant-select').value = config.assistant || '';
             document.getElementById('output-format').value = config.outputFormat || 'text';
+            document.getElementById('system-prompt').value = config.systemPrompt || '';
             document.getElementById('temperature').value = config.temperature || 0.8;
             document.getElementById('top-p').value = config.topP || 0.8;
             document.getElementById('top-k').value = config.topK || 50;
@@ -674,6 +678,7 @@ async function saveConfig() {
         model: document.getElementById('model-select').value,
         assistant: document.getElementById('assistant-select').value,
         outputFormat: document.getElementById('output-format').value,
+        systemPrompt: document.getElementById('system-prompt').value,
         temperature: parseFloat(document.getElementById('temperature').value),
         topP: parseFloat(document.getElementById('top-p').value),
         topK: parseInt(document.getElementById('top-k').value),
@@ -741,8 +746,75 @@ async function loadAssistants() {
             option.textContent = assistant.name;
             select.appendChild(option);
         }
+
+        // 添加助手选择变化事件
+        select.addEventListener('change', updateSystemPrompt);
+        
+        // 初始加载默认助手的系统提示词
+        if (select.value) {
+            updateSystemPrompt();
+        }
     } catch (error) {
         console.error('加载助手列表失败:', error);
+    }
+}
+
+// 更新系统提示词
+async function updateSystemPrompt() {
+    try {
+        const assistantId = document.getElementById('assistant-select').value;
+        if (!assistantId) return;
+        
+        const response = await fetch(`/api/assistants/${assistantId}`);
+        const assistant = await response.json();
+        
+        const systemPromptTextarea = document.getElementById('system-prompt');
+        systemPromptTextarea.value = assistant.prompt || '';
+        
+        // 根据当前输出格式更新系统提示词
+        updateOutputFormat();
+    } catch (error) {
+        console.error('获取助手系统提示词失败:', error);
+    }
+}
+
+// 更新输出格式
+function updateOutputFormat() {
+    const outputFormat = document.getElementById('output-format').value;
+    const assistantId = document.getElementById('assistant-select').value;
+    const systemPromptTextarea = document.getElementById('system-prompt');
+    
+    // 获取基础提示词（不包含格式说明）
+    let basePrompt = systemPromptTextarea.value;
+    
+    // 移除可能已存在的格式说明
+    const formatMarker = '\n\n--- 输出格式 ---';
+    if (basePrompt.includes(formatMarker)) {
+        basePrompt = basePrompt.substring(0, basePrompt.indexOf(formatMarker));
+    }
+    
+    // 根据选择的格式添加对应的格式说明
+    if (outputFormat !== 'text' && assistantId) {
+        fetch(`/api/assistants/${assistantId}`)
+            .then(response => response.json())
+            .then(assistant => {
+                let formatInstruction = '';
+                
+                if (outputFormat === 'markdown' && assistant.markdownFormat) {
+                    formatInstruction = assistant.markdownFormat;
+                } else if (outputFormat === 'json' && assistant.jsonFormat) {
+                    formatInstruction = assistant.jsonFormat;
+                }
+                
+                if (formatInstruction) {
+                    systemPromptTextarea.value = basePrompt + formatMarker + '\n' + formatInstruction;
+                } else {
+                    systemPromptTextarea.value = basePrompt;
+                }
+            })
+            .catch(error => console.error('获取格式说明失败:', error));
+    } else {
+        systemPromptTextarea.value = basePrompt;
     }
 }
 
@@ -762,6 +834,9 @@ async function initializePage() {
     
     // 添加删除配置按钮事件监听
     document.getElementById('delete-config-btn').addEventListener('click', deleteConfig);
+    
+    // 添加输出格式变化事件监听
+    document.getElementById('output-format').addEventListener('change', updateOutputFormat);
 }
 
 // 删除配置

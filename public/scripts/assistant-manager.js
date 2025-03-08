@@ -17,6 +17,11 @@ function renderAssistants(assistants) {
     Object.values(assistants).forEach(assistant => {
         const item = document.createElement('div');
         item.className = 'assistant-item';
+        item.onclick = (e) => {
+            if (!e.target.closest('.assistant-actions')) {
+                viewAssistant(assistant);
+            }
+        };
         
         const info = document.createElement('div');
         info.className = 'assistant-info';
@@ -42,16 +47,45 @@ function renderAssistants(assistants) {
     });
 }
 
+// 添加查看助手详情函数
+async function viewAssistant(assistant) {
+    document.getElementById('modalTitle').textContent = '查看助手';
+    document.getElementById('assistantId').value = assistant.id;
+    document.getElementById('assistantName').value = assistant.name;
+    document.getElementById('assistantPrompt').value = assistant.prompt;
+    document.getElementById('markdownFormat').value = assistant.markdownFormat || '';
+    document.getElementById('jsonFormat').value = assistant.jsonFormat || '';
+    
+    document.querySelectorAll('#assistantForm input, #assistantForm textarea').forEach(input => {
+        input.readOnly = true;
+    });
+    
+    document.querySelector('.button-group').innerHTML = `
+        <button type="button" onclick="closeModal()" class="control-button">关闭</button>
+    `;
+    
+    document.getElementById('assistantModal').classList.add('show');
+}
+
 // 显示添加助手模态框
 function showAddModal() {
     const modal = document.getElementById('assistantModal');
-    modal.style.display = 'flex';  // 改为 flex 布局
+    modal.classList.add('show');
     document.getElementById('modalTitle').textContent = '添加助手';
     document.getElementById('assistantId').value = '';
     document.getElementById('assistantName').value = '';
     document.getElementById('assistantPrompt').value = '';
     document.getElementById('markdownFormat').value = '';
     document.getElementById('jsonFormat').value = '';
+    
+    document.querySelectorAll('#assistantForm input, #assistantForm textarea').forEach(input => {
+        input.readOnly = false;
+    });
+    
+    document.querySelector('.button-group').innerHTML = `
+        <button type="button" onclick="closeModal()" class="control-button">取消</button>
+        <button type="submit" class="control-button">保存</button>
+    `;
 }
 
 // 显示编辑助手模态框
@@ -66,7 +100,17 @@ async function editAssistant(id) {
         document.getElementById('assistantPrompt').value = assistant.prompt;
         document.getElementById('markdownFormat').value = assistant.markdownFormat || '';
         document.getElementById('jsonFormat').value = assistant.jsonFormat || '';
-        document.getElementById('assistantModal').style.display = 'block';
+        
+        document.querySelectorAll('#assistantForm input, #assistantForm textarea').forEach(input => {
+            input.readOnly = false;
+        });
+        
+        document.querySelector('.button-group').innerHTML = `
+            <button type="button" onclick="closeModal()" class="control-button">取消</button>
+            <button type="submit" class="control-button">保存</button>
+        `;
+        
+        document.getElementById('assistantModal').classList.add('show');
     } catch (error) {
         console.error('获取助手信息失败:', error);
     }
@@ -74,7 +118,7 @@ async function editAssistant(id) {
 
 // 关闭模态框
 function closeModal() {
-    document.getElementById('assistantModal').style.display = 'none';
+    document.getElementById('assistantModal').classList.remove('show');
 }
 
 // 删除助手
