@@ -394,6 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 添加控制面板按钮事件监听
     document.getElementById('control-panel-button').addEventListener('click', openControlPanel);
+    document.getElementById('node-auto-add-button').addEventListener('click', nodeAutoAdd2);
 });
 document.getElementById('editContentBtn').addEventListener('click', function() {
     isEditing = true;
@@ -920,8 +921,43 @@ function getConversationHistory() {
     
     return messages;
 }
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('代码已复制到剪贴板');
+    }).catch(err => {
+        console.error('复制失败', err);
+    });
+}
+function nodeAutoAdd(text){
+   fetch('/api/auto-generate-children', {
+            method: 'POST',
+            body: JSON.stringify({ parentId: currentNodeId, text: text })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+    })
+    .catch(error => console.error('自动生成节点失败:', error));
+    
+}
 
-
+function nodeAutoAdd2(){
+    
+     const text=document.getElementById('contentArea').textContent;
+    
+   
+     
+           fetch('/api/auto-generate-children', {
+               method: 'POST',
+               body: JSON.stringify({ parentId: currentNodeId, text: text })
+       })
+       .then(response => response.json())
+       .then(data => {
+           console.log(data);
+       })
+       .catch(error => console.error('自动生成节点失败:', error));
+       
+   }
     // 添加消息到界面
     function addMessage(role, content) {
         const container = document.getElementById('response-container');
@@ -945,6 +981,19 @@ function getConversationHistory() {
                 copyButton.addEventListener('click', () => copyToClipboard(part));
                 codePre.appendChild(copyButton);
                 messageDiv.appendChild(codePre);
+                if(part.includes("json")){
+                   //自动生成下级节点按钮
+                   const nodePre = document.createElement('pre');
+                   nodePre.textContent = part;
+                   const nodeButton = document.createElement('button'); 
+                   nodeButton.textContent = '生成节点';
+                   nodeButton.classList.add('copy-button');
+                   nodeButton.addEventListener('click', () => nodeAutoAdd(part));
+                  
+                   nodePre.appendChild(nodeButton);
+                   messageDiv.appendChild(nodePre);
+
+                }
             }
         });
 

@@ -22,7 +22,8 @@
                 <button id="cancelContentBtn" class="delete-config-btn" style="display: none;">取消</button>
                 <button id="viewSelectedBtn" class="control-button">查看选择</button>
                 <button id="config-button" class="config-button">模型配置</button>
-                <button id="control-panel-button" class="config-button">控制面板</button>
+                <button id="control-panel-button" class="config-button">问问AI</button>
+                <button id="node-auto-add-button" class="config-button">自动生成节点</button>
             </div></div>
             <div id="contentArea">
                 <p>请选择左侧节点查看详细信息</p>
@@ -49,8 +50,8 @@
                 <label>节点描述：</label>
                 <textarea id="nodeDescription" rows="4"></textarea>
             </div>
-            <button onclick="addNode()">确定</button>
-            <button onclick="closeModal()">取消</button>
+            <button class="save-config-btn" onclick="addNode()">确定</button>
+            <button class="delete-config-btn" onclick="closeModal()">取消</button>
         </div>
     </div>
 

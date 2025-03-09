@@ -501,6 +501,15 @@ div[role='assistant'] {
     white-space: nowrap;
     align-self: flex-end;
 }
+.copy-button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+}
 #user-input {
     flex: 1;
     padding: 8px;

@@ -411,7 +411,9 @@ app.post('/api/chat', async (req, res) => {
                     },
                     httpsAgent: agent, // 添加代理支持
                 });
-                res.json( {response: response.data.candidates[0].content.parts[0].text} );
+                const aiResponse = response.data.candidates[0].content.parts[0].text;
+                writeToLog(messages, aiResponse);
+                res.json( {response: aiResponse} );
                 break;
                 case 'tianyi':
                     case 'huawei':
@@ -434,7 +436,9 @@ app.post('/api/chat', async (req, res) => {
                         'Content-Type': 'application/json'
                     }
                 });
-                res.json( { response: response.data.choices[0].message.content }  );
+                const aiResponse1 = response.data.choices[0].message.content;
+                writeToLog(messages, aiResponse1);
+                res.json( {response: aiResponse1} );
                 break;
 
 
@@ -502,3 +506,38 @@ app.post('/api/auto-generate-children', (req, res) => {
 app.listen(port, () => {
     console.log(`服务器运行在 http://localhost:${port}`);
 })
+
+
+// 日志写入函数
+function writeToLog(userMessage, aiResponse) {
+    try {
+        const now = new Date();
+        const fileName = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}-${String(now.getMinutes()).padStart(2, '0')}-${String(now.getSeconds()).padStart(2, '0')}.log`;
+        const logPath = path.join(logsDir, fileName);
+        
+        const logContent = `时间: ${now.toISOString()}\n` +
+                          `字数: ${JSON.stringify(userMessage, null, 2).length}\n` +
+                          `用户发送:\n${JSON.stringify(userMessage, null, 2)}\n\n` +
+                          `AI回复字数: ${aiResponse.length}:\n${JSON.stringify(aiResponse, null, 2)}\n` +
+                          `----------------------------------------\n`;
+        
+        fs.appendFileSync(logPath, logContent, 'utf8');
+    } catch (error) {
+        console.error('写入日志失败:', error);
+    }
+}
+//通过接口写入日志
+app.post('/api/write-log', (req, res) => {
+    const { userMessage, aiResponse } = req.body;
+    writeToLog(userMessage, aiResponse);
+    res.json({ success: true, message: '日志写入成功' });
+});
+// 创建日志目录
+const logsDir = path.join(__dirname, 'logs');
+try {
+    if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+    }
+} catch (error) {
+    console.error('创建logs目录失败:', error);
+}
