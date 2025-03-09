@@ -853,7 +853,8 @@ async function initializePage() {
     await Promise.all([
         loadModels(),
         loadAssistants(),
-        loadModelConfigs()
+        loadModelConfigs(),
+        loadKeywordTypes()
     ]);
 
     // 添加配置选择的change事件监听
@@ -1091,73 +1092,55 @@ function updatePromptTemplate() {
         return;
     }
     
-    // 根据选择的小说类型和关键字类型生成对应的模板
-    let template = '';
-    
-    if (promptType === '世界观') {
-        template = `请你作为一个专业的小说策划师，为我构建一个完整的【${novelType}】类型小说的世界观设定。
-需要包含以下要素：
-1. 世界背景：整体世界观的基本设定，包括时代背景、空间结构等
-2. 核心法则：该世界运行的基本规则，如修炼体系、科技水平、力量体系等
-3. 主要势力：世界中的主要势力分布和特点
-4. 特殊元素：独特的物品、生物、现象等
-5. 文明特征：世界中的文明发展水平、文化特点等
-6. 冲突源：潜在的矛盾点和冲突来源
-7. 丰富的想象力、逻辑自洽
+    // 从keywords.json获取对应的模板
+    fetch('/api/keywords')
+        .then(response => response.json())
+        .then(data => {
+            // 查找对应类型的模板
+            if (data[promptType] && data[promptType].description) {
+                // 替换模板中的小说类型占位符
+                let template = data[promptType].description.replace(/\${novelType}/g, novelType);
+                templateTextarea.value = template;
+            } else {
+                templateTextarea.value = '';
+                console.error('未找到对应的模板');
+            }
+        })
+        .catch(error => {
+            console.error('获取关键字模板失败:', error);
+            templateTextarea.value = '';
+        });
+}
 
-请详细描述每个方面，使其既符合【${novelType}】小说的特点，又具有独特性和创新性。`;
-    } else if (promptType === '人物') {
-        template = `请你作为一个专业的小说角色设计师，为我创建一个【${novelType}】类型小说中的核心角色。
-需要包含以下要素：
-1. 基本信息：姓名、年龄、性别、外貌特征等
-2. 背景故事：角色的成长经历、家庭背景等
-3. 性格特点：主要性格特征、行为模式、价值观等
-4. 能力特长：角色的技能、能力、特殊天赋等
-5. 关系网络：与其他角色的关系
-6. 成长轨迹：角色可能的成长变化
-7. 内心冲突：角色面临的内心矛盾和挑战
-
-请详细描述每个方面，使这个角色既符合【${novelType}】小说的特点，又具有深度和独特魅力。`;
-    } else if (promptType === '情节') {
-        template = `请你作为一个专业的小说情节设计师，为我设计一段【${novelType}】类型小说中的精彩情节。
-需要包含以下要素：
-1. 情节概述：简要描述这段情节的主要内容
-2. 场景设置：情节发生的具体场景和环境
-3. 参与角色：参与这段情节的主要角色
-4. 冲突设计：情节中的主要冲突和矛盾
-5. 情节发展：事件的起因、经过和结果
-6. 转折点：情节中的意外转折或惊喜
-7. 情感变化：角色在情节中的情感变化
-8. 伏笔与呼应：与前后情节的联系
-
-请详细描述每个方面，使这段情节既符合【${novelType}】小说的特点，又具有吸引力和张力。`;
-    } else if (promptType === '大纲') {
-        template = `请你作为一个专业的小说策划师，为我设计一部【${novelType}】类型小说的完整大纲。
-需要包含以下要素：
-1. 故事背景：小说的世界背景和时代设定
-2. 主要角色：3-5个核心角色及其简要介绍
-3. 核心冲突：贯穿全书的主要矛盾和冲突
-4. 情节架构：分为开端、发展、高潮、结局四个部分
-5. 章节规划：大致的章节划分和每章主要内容
-6. 故事主题：小说要表达的核心思想和价值观
-7. 特色元素：使这部小说与众不同的独特元素
-
-请详细描述每个方面，使这个大纲既符合【${novelType}】小说的特点，又具有创新性和吸引力。`;
-    } else if (promptType === '设定') {
-        template = `请你作为一个专业的小说设定师，为我创建一个【${novelType}】类型小说中的特殊设定。
-需要包含以下要素：
-1. 设定名称：这个特殊设定的名称
-2. 基本描述：设定的基本概念和特点
-3. 运行规则：设定在小说世界中的运作方式和规则
-4. 历史由来：设定的起源和发展历史
-5. 影响范围：设定对小说世界和角色的影响
-6. 限制条件：设定的局限性和约束条件
-7. 特殊案例：设定的一些特殊表现或例外情况
-
-请详细描述每个方面，使这个设定既符合【${novelType}】小说的特点，又具有创新性和合理性。`;
-    }
-    
-    templateTextarea.value = template;
+// 加载关键字类型
+function loadKeywordTypes() {
+    fetch('/api/keywords')
+        .then(response => response.json())
+        .then(data => {
+            const select = document.getElementById('prompt-type');
+            
+            // 清除现有选项
+            while (select.firstChild) {
+                select.removeChild(select.firstChild);
+            }
+            
+            // 添加默认选项
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '请选择关键字类型...';
+            select.appendChild(defaultOption);
+            
+            // 添加从keywords.json获取的选项
+            for (const type in data) {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = data[type].name || type;
+                select.appendChild(option);
+            }
+        })
+        .catch(error => {
+            console.error('加载关键字类型失败:', error);
+        });
 }
 
 // 复制提示词模板
