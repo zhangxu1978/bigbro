@@ -322,6 +322,12 @@ async function deleteNode(nodeId) {
 // 发送消息到AI
 async function sendMessage() {
     const userInput = document.getElementById('user-input');
+    if (userInput) {
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
     const model = document.getElementById('model-select').value;
     const assistant = document.getElementById('assistant-select').value;
     const message = userInput.value.trim();

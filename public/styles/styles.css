@@ -503,6 +503,10 @@ div[role='assistant'] {
     border: 1px solid #ccc;
     border-radius: 4px;
     resize: none;
+    min-height: 40px;
+    max-height: 200px;
+    transition: height 0.2s ease;
+    overflow-y: hidden;
 }
 
 #sendButton {
