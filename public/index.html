@@ -95,7 +95,19 @@
             </div>
         </div>
     </div>
-
+    <div class="modal" id="control-panel-modal">
+        <div class="control-modal-content">
+            <span class="close" onclick="closeControlPanel()">&times;</span>
+            <div class="control-panel-content">
+                <div id="response-container"></div>
+                <div class="input-container">
+                    <button id="config-button1" class="config-button">模型配置</button>
+                    <textarea id="user-input" placeholder="shift enter 发送数据"></textarea>
+                    <button id="sendButton" class="config-button" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal" id="config-modal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -158,19 +170,7 @@
             </div>
         </div>
     </div>
-    <div class="modal" id="control-panel-modal">
-        <div class="control-modal-content">
-            <span class="close" onclick="closeControlPanel()">&times;</span>
-            <div class="control-panel-content">
-                <div id="response-container"></div>
-                <div class="input-container">
-                    <button id="config-button1" class="config-button">模型配置</button>
-                    <textarea id="user-input" placeholder="shift enter 发送数据"></textarea>
-                    <button id="sendButton" class="config-button" onclick="sendMessage()">发送</button>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <script src="./scripts/scripts.js"></script>
 </body>

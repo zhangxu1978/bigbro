@@ -43,8 +43,9 @@ div[role='assistant'] {
     height: 20px;
     cursor: pointer;
     font-size: 12px;
-    line-height: 20px;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .copy-button {
