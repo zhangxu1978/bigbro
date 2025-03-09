@@ -373,9 +373,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initializePage();
     
     const configButton = document.getElementById('config-button');
+    const configButton1 = document.getElementById('config-button1');
     const configModal = document.getElementById('config-modal');
     const closeButton = configModal.querySelector('.close');
 
+    configButton1.onclick = () => configModal.style.display = 'block';
     configButton.onclick = () => configModal.style.display = 'block';
     closeButton.onclick = () => configModal.style.display = 'none';
     window.onclick = (event) => {
