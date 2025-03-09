@@ -192,6 +192,7 @@ body {
 }
 div[role='user'], div[role='assistant'] {
     padding: 10px;
+    padding-right: 30px;
     border-radius: 10px;
     margin-bottom: 10px;
     max-width: 80%;
@@ -208,6 +209,7 @@ div[role='assistant'] {
 }
 
 .delete-button {
+   
     position: absolute;
     top: 5px;
     right: 5px;
@@ -359,13 +361,13 @@ div[role='assistant'] {
 }
 
 .modal button {
-    padding: 10px 20px;
+
     border: none;
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
     transition: background-color 0.2s;
-    margin: 0 8px;
+    margin: 0 0px;
 }
 
 .modal button.primary {

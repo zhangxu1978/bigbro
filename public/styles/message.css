@@ -15,6 +15,7 @@ body {
 
 div[role='user'], div[role='assistant'] {
     padding: 10px;
+    padding-right: 30px;
     border-radius: 10px;
     margin-bottom: 10px;
     max-width: 80%;
