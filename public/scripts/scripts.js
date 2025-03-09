@@ -931,71 +931,106 @@ function copyToClipboard(text) {
 function nodeAutoAdd(text){
    fetch('/api/auto-generate-children', {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ parentId: currentNodeId, text: text })
     })
-    .then(response => response.json())
-    .then(data => {
-        console.log(data);
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '自动生成节点失败');
+            });
+        }
+        return response.json();
     })
-    .catch(error => console.error('自动生成节点失败:', error));
-    
+    .then(data => {
+        console.log('节点生成成功:', data);
+        alert('成功生成' + data.length + '个节点');
+        fetchTreeData(); // 刷新树形结构
+    })
+    .catch(error => {
+        console.error('自动生成节点失败:', error);
+        alert('自动生成节点失败: ' + error.message);
+    });
 }
 
 function nodeAutoAdd2(){
+    if (!currentNodeId) {
+        alert('请先选择一个节点');
+        return;
+    }
     
-     const text=document.getElementById('contentArea').textContent;
+    const text = document.getElementById('contentArea').innerHTML;
+    console.log('当前节点ID:', currentNodeId);
+    console.log('要处理的文本:', text);
     
-   
-     
-           fetch('/api/auto-generate-children', {
-               method: 'POST',
-               body: JSON.stringify({ parentId: currentNodeId, text: text })
-       })
-       .then(response => response.json())
-       .then(data => {
-           console.log(data);
-       })
-       .catch(error => console.error('自动生成节点失败:', error));
-       
-   }
-    // 添加消息到界面
-    function addMessage(role, content) {
-        const container = document.getElementById('response-container');
-        const messageDiv = document.createElement('div');
-        messageDiv.setAttribute('role', role);
-        
-        // 处理代码块和普通文本
-        const codeRegex = /```([\s\S]*?)```/g;
-        const parts = content.split(codeRegex);
-        parts.forEach((part, index) => {
-            if (index % 2 === 0) {
-                // Regular text
-                messageDiv.appendChild(document.createTextNode(part));
-            } else {
-                // Code block
-                const codePre = document.createElement('pre');
-                codePre.textContent = part;
-                const copyButton = document.createElement('button');
-                copyButton.textContent = '复制';
-                copyButton.classList.add('copy-button');
-                copyButton.addEventListener('click', () => copyToClipboard(part));
-                codePre.appendChild(copyButton);
-                messageDiv.appendChild(codePre);
-                if(part.includes("json")){
-                   //自动生成下级节点按钮
-                   const nodePre = document.createElement('pre');
-                   nodePre.textContent = part;
-                   const nodeButton = document.createElement('button'); 
-                   nodeButton.textContent = '生成节点';
-                   nodeButton.classList.add('copy-button');
-                   nodeButton.addEventListener('click', () => nodeAutoAdd(part));
-                  
-                   nodePre.appendChild(nodeButton);
-                   messageDiv.appendChild(nodePre);
+    fetch('/api/auto-generate-children', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ parentId: currentNodeId, text: text })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => {
+                throw new Error(err.error || '自动生成节点失败');
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('节点生成成功:', data);
+        alert('成功生成' + data.length + '个节点');
+        fetchTreeData(); // 刷新树形结构
+    })
+    .catch(error => {
+        console.error('自动生成节点失败:', error);
+        alert('自动生成节点失败: ' + error.message);
+    });
+}
 
-                }
+// 添加消息到界面
+function addMessage(role, content) {
+    const container = document.getElementById('response-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.setAttribute('role', role);
+    
+    // 处理代码块和普通文本
+    const codeRegex = /```([\s\S]*?)```/g;
+    const parts = content.split(codeRegex);
+    parts.forEach((part, index) => {
+        if (index % 2 === 0) {
+            // Regular text
+            messageDiv.appendChild(document.createTextNode(part));
+        } else {
+            // Code block
+            const codePre = document.createElement('pre');
+            codePre.textContent = part;
+            const copyButton = document.createElement('button');
+            copyButton.textContent = '复制';
+            copyButton.classList.add('copy-button');
+            copyButton.addEventListener('click', () => copyToClipboard(part));
+            codePre.appendChild(copyButton);
+            messageDiv.appendChild(codePre);
+            if(part.includes("json")){
+               //自动生成下级节点按钮
+               const nodeButton = document.createElement('button'); 
+               nodeButton.textContent = '生成节点';
+               nodeButton.classList.add('copy-button');
+               nodeButton.addEventListener('click', () => {
+                   if (!currentNodeId) {
+                       alert('请先选择一个节点，然后再点击生成节点按钮');
+                       return;
+                   }
+                   nodeAutoAdd(part);
+               });
+               
+               codePre.appendChild(nodeButton);
             }
-        });
+        }
+    });
 
     // 添加删除按钮
     const deleteButton = document.createElement('button');
