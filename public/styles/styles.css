@@ -621,4 +621,51 @@ div[role='assistant'] {
     border-color: #4CAF50;
     box-shadow: 0 0 0 2px rgba(76,175,80,0.2);
 }
-/* ... 将原有style标签中的所有CSS内容复制到这里 ... */
+
+/* 关键字弹出框样式 */
+#prompt-modal .modal-content {
+    max-width: 700px;
+    width: 80%;
+}
+
+#prompt-template {
+    width: 100%;
+    min-height: 200px;
+    font-family: monospace;
+    padding: 10px;
+    line-height: 1.5;
+}
+
+.button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-group button {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.button-group .primary {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.button-group .primary:hover {
+    background-color: #45a049;
+}
+
+.button-group .secondary {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.button-group .secondary:hover {
+    background-color: #e8e8e8;
+}
+/* ... existing code ... */

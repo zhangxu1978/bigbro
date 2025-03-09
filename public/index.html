@@ -173,6 +173,66 @@
         </div>
     </div>
 
+    <!-- 添加关键字弹出框 -->
+    <div class="modal" id="prompt-modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePromptModal()">&times;</span>
+            <h3>选择提示词模板</h3>
+            <div class="form-actions">
+
+                <select id="novel-type" class="config-input" onchange="updatePromptTemplate()">
+                     <option value="玄幻">玄幻</option>
+                    <option value="仙侠">仙侠</option>
+                    <option value="科幻">科幻</option>
+                    <option value="都市">都市</option>
+                    <option value="架空">架空</option>
+                    <option value="穿越">穿越</option>
+                    <option value="重生">重生</option>
+                    <option value="无限流">无限流</option>
+                    <option value="系统流">系统流</option>
+                    <option value="无敌流">无敌流</option>
+                    <option value="历史正剧">历史</option>
+                    <option value="现代">现代</option>
+                    <option value="女性现代职场">女性现代职场</option>
+                    <option value="奇幻">奇幻</option>
+                    <option value="末世">末世</option>
+                    <option value="蒸汽">蒸汽</option>
+                    <option value="魔法">魔法</option>
+                    <option value="武侠">武侠</option>
+                    <option value="修仙">修仙</option>
+                    <option value="军事">军事</option>
+                    <option value="赛博">赛博</option>
+                    <option value="灵异">灵异</option>
+                    <option value="游戏">游戏</option>
+                    <option value="现代爱情">现代爱情</option>
+                    <option value="古代爱情">古代爱情</option>
+                    <option value="科幻爱情">科幻爱情</option>
+                    <option value="宫斗">宫斗</option>
+                    <option value="权谋">权谋</option>
+                    <option value="重生">重生</option>
+                    <option value="宅斗">宅斗</option>
+                    <option value="种田">种田</option>
+                </select>
+                <select id="prompt-type" class="config-input" onchange="updatePromptTemplate()">
+                    <option value="">请选择关键字类型...</option>
+                    <option value="世界观">世界观生成</option>
+                    <option value="人物">人物生成</option>
+                    <option value="情节">情节生成</option>
+                    <option value="大纲">大纲生成</option>
+                    <option value="设定">设定生成</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="prompt-template">提示词模板：</label>
+                <textarea id="prompt-template" class="control-textarea" rows="10"></textarea>
+            </div>
+            <div class="button-group">
+                <button onclick="copyPromptTemplate()" class="control-button primary">复制</button>
+                <button onclick="usePromptTemplate()" class="control-button primary">使用</button>
+                <button onclick="closePromptModal()" class="control-button secondary">关闭</button>
+            </div>
+        </div>
+    </div>
 
     <script src="./scripts/scripts.js"></script>
 </body>

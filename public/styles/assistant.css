@@ -296,3 +296,57 @@ body {
     box-shadow: none;
     border-color: #e9ecef;
 }
+
+/* 关键字管理样式 */
+.keyword-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.keyword-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 15px;
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.keyword-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.keyword-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.keyword-card .description {
+    color: #666;
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.keyword-card .category,
+.keyword-card .tags {
+    font-size: 0.9em;
+    color: #777;
+    margin: 5px 0;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 15px;
+}
+
+.no-data {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: #888;
+    padding: 20px;
+}
