@@ -958,3 +958,16 @@ function getConversationHistory() {
     container.appendChild(messageDiv);
     container.scrollTop = container.scrollHeight;
 }
+
+// 添加自动调整文本框高度的功能
+document.getElementById('user-input').addEventListener('input', function(e) {
+    this.style.height = 'auto';
+    this.style.height = (this.scrollHeight) + 'px';
+});
+
+// 初始化时设置文本框的初始高度
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('user-input');
+    textarea.style.height = 'auto';
+    textarea.style.height = (textarea.scrollHeight) + 'px';
+});
