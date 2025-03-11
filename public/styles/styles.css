@@ -46,6 +46,13 @@ body {
     transition: flex 0.3s ease;
 }
 
+#contentArea {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    padding: 15px;
+}
+
 .right-panel-container {
     position: relative;
     flex: 0 0 250px;
@@ -547,7 +554,7 @@ div[role='assistant'] {
     min-height: 40px;
     max-height: 200px;
     transition: height 0.2s ease;
-    overflow-y: hidden;
+    overflow-y: auto;
 }
 
 #sendButton {

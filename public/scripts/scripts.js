@@ -259,6 +259,9 @@ async function updateNodeParent(nodeId, newParentId) {
 function showAddModal(parentId) {
     currentParentId = parentId;
     const modal = document.getElementById('addNodeModal');
+    //清除节点描述和节点类型
+    document.getElementById('nodeType').value = '';
+    document.getElementById('nodeDescription').value = '';
     modal.style.display = 'block';
     setTimeout(() => {
         modal.classList.add('show');
@@ -432,8 +435,7 @@ async function viewNode(nodeId) {
         const node = await response.json();
         const contentArea = document.getElementById('contentArea');
         contentArea.innerHTML = `
-            <h3>${node.text} ${node.type ? `(${node.type})` : ''}</h3>
-            <p>${node.description || '暂无描述'}</p>
+        ${node.description || ''}
         `;
         // 隐藏菜单和遮罩层
         document.getElementById('nodeContextMenu').style.display = 'none';
