@@ -1084,6 +1084,8 @@ function closePromptModal() {
 // 更新提示词模板
 function updatePromptTemplate() {
     const novelType = document.getElementById('novel-type').value;
+    const startType = document.getElementById('start-type').value;
+    const endType = document.getElementById('end-type').value;
     const promptType = document.getElementById('prompt-type').value;
     const templateTextarea = document.getElementById('prompt-template');
     
@@ -1100,6 +1102,8 @@ function updatePromptTemplate() {
             if (data[promptType] && data[promptType].description) {
                 // 替换模板中的小说类型占位符
                 let template = data[promptType].description.replace(/\${novelType}/g, novelType);
+                template=template.replace(/\${startType}/g, startType);
+                template=template.replace(/\${endType}/g, endType);
                 templateTextarea.value = template;
             } else {
                 templateTextarea.value = '';
