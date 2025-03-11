@@ -17,8 +17,17 @@ function renderTree(node, level = 0) {
 
     const nodeElement = document.createElement('div');
     nodeElement.className = 'tree-node';
-    nodeElement.setAttribute('data-id', node.id);
+    nodeElement.setAttribute('data-id', node.id || '');
+   // console.log('渲染节点:', node.text, '节点ID:', node.id); // 添加调试日志
     nodeElement.style.marginLeft = `${level}px`;
+    // 添加拖拽功能
+    nodeElement.draggable = true;
+    nodeElement.addEventListener('dragstart', handleDragStart);
+    nodeElement.addEventListener('dragover', handleDragOver);
+    nodeElement.addEventListener('dragenter', handleDragEnter);
+    nodeElement.addEventListener('dragleave', handleDragLeave);
+    nodeElement.addEventListener('drop', handleDrop);
+    nodeElement.addEventListener('dragend', handleDragEnd);
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'tree-node-content';
@@ -102,6 +111,149 @@ function renderTree(node, level = 0) {
     return nodeElement;
 }
 
+// 声明全局变量来存储被拖动的节点
+let draggedNode = null;
+
+// 处理拖动开始
+function handleDragStart(e) {
+    e.stopPropagation(); // 阻止事件冒泡
+    
+    // 存储被拖动的节点引用
+    draggedNode = this;
+    const nodeId = this.getAttribute('data-id');
+    console.log('拖动开始，节点ID:', nodeId);
+    
+    // 设置可移动数据
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', nodeId);
+    
+    // 添加拖动样式
+    setTimeout(() => {
+        this.classList.add('dragging');
+    }, 0);
+}
+
+// 处理拖动经过目标节点
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault(); // 允许放置
+    }
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+}
+
+// 处理拖动进入目标节点
+function handleDragEnter(e) {
+    this.classList.add('drag-over');
+}
+
+// 处理拖动离开目标节点
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+// 处理放置
+function handleDrop(e) {
+    e.stopPropagation();
+    e.preventDefault();
+    
+    // 如果拖动节点放到自己上面，什么都不做
+    if (draggedNode === this) {
+        return false;
+    }
+    
+    // 不允许将节点拖放到其子节点中（防止循环引用）
+    if (isDescendant(draggedNode, this)) {
+        alert('不能将节点移动到其子节点下');
+        return false;
+    }
+    
+    // 获取被拖动节点和目标节点的ID
+    const draggedNodeId = draggedNode.getAttribute('data-id');
+    const targetNodeId = this.getAttribute('data-id');
+    
+    console.log('拖动节点ID:', draggedNodeId); // 添加调试日志
+    console.log('目标节点ID:', targetNodeId); // 添加调试日志
+    
+    // 检查是否为根节点
+    if (draggedNodeId === 'root') {
+        alert('不能移动根节点');
+        return false;
+    }
+    
+    // 调用API更新节点关系
+    updateNodeParent(draggedNodeId, targetNodeId);
+    
+    return false;
+}
+
+// 判断一个节点是否是另一个节点的后代
+function isDescendant(draggedNode, targetNode) {
+    // 获取节点的ID
+    const draggedId = draggedNode.getAttribute('data-id');
+    const targetId = targetNode.getAttribute('data-id');
+    
+    // 递归检查目标节点的所有子节点容器
+    function checkChildren(node) {
+        const childrenContainer = node.querySelector('.children-container');
+        if (!childrenContainer) return false;
+        
+        const children = childrenContainer.children;
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            if (child.getAttribute('data-id') === draggedId) {
+                return true;
+            }
+            if (checkChildren(child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // 如果拖动的节点是目标节点本身，返回true
+    if (draggedId === targetId) {
+        return true;
+    }
+    
+    // 检查目标节点的所有子节点
+    return checkChildren(targetNode);
+}
+
+// 处理拖动结束
+function handleDragEnd(e) {
+    // 移除所有拖动相关的样式
+    this.classList.remove('dragging');
+    document.querySelectorAll('.drag-over').forEach(node => {
+        node.classList.remove('drag-over');
+    });
+}
+
+// 调用API更新节点父节点关系
+async function updateNodeParent(nodeId, newParentId) {
+    try {
+        const response = await fetch(`/api/node/${nodeId}/parent`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                newParentId: newParentId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '更新节点关系失败');
+        }
+
+        // 更新成功后刷新树形结构
+        fetchTreeData();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('移动节点失败: ' + error.message);
+    }
+}
 
 // 显示添加节点模态框
 function showAddModal(parentId) {

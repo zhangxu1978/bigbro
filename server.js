@@ -308,6 +308,109 @@ app.get('/api/node/:id', (req, res) => {
     res.json(node);
 });
 
+// 更新节点的父节点关系
+app.put('/api/node/:id/parent', (req, res) => {
+    const nodeId = req.params.id;
+    const { newParentId } = req.body;
+    const data = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
+    // 不允许移动根节点
+    if (nodeId === 'root') {
+        return res.status(400).json({ error: '不能移动根节点' });
+    }
+
+    // 不能将节点移动到自身下
+    if (nodeId === newParentId) {
+        return res.status(400).json({ error: '不能将节点移动到自身下' });
+    }
+
+    let nodeToMove = null;
+    let oldParent = null;
+    let newParent = null;
+
+    // 查找要移动的节点和其当前父节点
+    function findNodeAndParent(node, parent = null) {
+        if (node.id === nodeId) {
+            nodeToMove = node;
+            oldParent = parent;
+            return true;
+        }
+        if (node.children && node.children.length > 0) {
+            for (let child of node.children) {
+                if (findNodeAndParent(child, node)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 查找新的父节点
+    function findNewParent(node) {
+        if (node.id === newParentId) {
+            newParent = node;
+            return true;
+        }
+        if (node.children && node.children.length > 0) {
+            for (let child of node.children) {
+                if (findNewParent(child)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // 检查是否会形成循环引用
+    function checkCyclicReference(node, targetId) {
+        if (node.id === targetId) {
+            return true;
+        }
+        if (node.children && node.children.length > 0) {
+            return node.children.some(child => checkCyclicReference(child, targetId));
+        }
+        return false;
+    }
+
+    // 开始查找节点
+    findNodeAndParent(data);
+    findNewParent(data);
+
+    if (!nodeToMove) {
+        return res.status(404).json({ error: '要移动的节点未找到' });
+    }
+
+    if (!newParent) {
+        return res.status(404).json({ error: '目标父节点未找到' });
+    }
+
+    // 检查是否会形成循环引用
+    if (checkCyclicReference(nodeToMove, newParentId)) {
+        return res.status(400).json({ error: '不能将节点移动到其子节点下' });
+    }
+
+    // 检查节点类型的合法性
+    if (newParentId === 'root' && nodeToMove.type !== '书籍') {
+        return res.status(400).json({ error: '根节点下只能放置书籍类型的节点' });
+    }
+
+    if (newParent.id !== 'root' && newParent.type !== '书籍' && nodeToMove.type !== newParent.type) {
+        return res.status(400).json({ error: '只有书籍节点才能包含不同类型的子节点' });
+    }
+
+    // 从原父节点中移除
+    if (oldParent) {
+        oldParent.children = oldParent.children.filter(child => child.id !== nodeId);
+    }
+
+    // 添加到新父节点下
+    newParent.children.push(nodeToMove);
+
+    // 保存更新后的数据
+    fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+    res.json({ message: '节点移动成功' });
+});
+
 // 配置文件路径
 const modelConfigsFile = path.join(__dirname, 'data', 'model_configs.json');
 
