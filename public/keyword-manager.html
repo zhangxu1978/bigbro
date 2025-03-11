@@ -6,6 +6,24 @@
     <title>关键字管理</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="./styles/assistant.css">
+    <style>
+        .keyword-row {
+            display: flex;
+            flex-direction: row;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .input-field {
+            flex: 1;
+        }
+        
+        .large-description {
+            min-height: 150px;
+            height: 400px;
+            width: 100%;
+        }
+    </style>
 </head>
 <body>
     <div class="container">
@@ -25,22 +43,25 @@
             <h3 id="modalTitle">添加关键字</h3>
             <form id="keywordForm">
                 <input type="hidden" id="keywordId">
-                <div class="form-group">
-                    <label for="keywordName">关键字名称：</label>
-                    <input type="text" id="keywordName" required>
+                <div class="form-group keyword-row">
+                    <div class="input-field">
+                        <label for="keywordName">关键字名称：</label>
+                        <input type="text" id="keywordName" required>
+                    </div>
+                    <div class="input-field">
+                        <label for="keywordCategory">分类：</label>
+                        <input type="text" id="keywordCategory" placeholder="可选">
+                    </div>
+                    <div class="input-field">
+                        <label for="keywordTags">标签：</label>
+                        <input type="text" id="keywordTags" placeholder="多个标签用逗号分隔">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="keywordDescription">关键字描述：</label>
-                    <textarea id="keywordDescription" required></textarea>
+                    <textarea id="keywordDescription" class="large-description" required></textarea>
                 </div>
-                <div class="form-group">
-                    <label for="keywordCategory">分类：</label>
-                    <input type="text" id="keywordCategory" placeholder="可选">
-                </div>
-                <div class="form-group">
-                    <label for="keywordTags">标签：</label>
-                    <input type="text" id="keywordTags" placeholder="多个标签用逗号分隔">
-                </div>
+
                 <div class="button-group">
                     <button type="button" onclick="closeModal()" class="control-button">取消</button>
                     <button type="submit" class="control-button">保存</button>
@@ -51,4 +72,4 @@
 
     <script src="./scripts/keyword-manager.js"></script>
 </body>
-</html> 
+</html>

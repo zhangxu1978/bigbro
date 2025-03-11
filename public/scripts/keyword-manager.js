@@ -59,7 +59,7 @@ function showAddModal() {
     document.getElementById('modalTitle').textContent = '添加关键字';
     document.getElementById('keywordForm').reset();
     document.getElementById('keywordId').value = '';
-    document.getElementById('keywordModal').style.display = 'block';
+    document.getElementById('keywordModal').classList.add('show');
 }
 
 // 显示编辑关键字模态框
@@ -75,12 +75,12 @@ function editKeyword(id) {
     document.getElementById('keywordCategory').value = keyword.category || '';
     document.getElementById('keywordTags').value = keyword.tags ? keyword.tags.join(', ') : '';
     
-    document.getElementById('keywordModal').style.display = 'block';
+    document.getElementById('keywordModal').classList.add('show');
 }
 
 // 关闭模态框
 function closeModal() {
-    document.getElementById('keywordModal').style.display = 'none';
+    document.getElementById('keywordModal').classList.remove('show');
 }
 
 // 删除关键字
@@ -163,4 +163,4 @@ window.onclick = function(event) {
     if (event.target === modal) {
         closeModal();
     }
-}; 
+};
