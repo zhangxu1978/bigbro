@@ -86,6 +86,7 @@
         <div class="context-menu-item" onclick="viewNode(currentNodeId)">查看节点</div>
         <div class="context-menu-item" onclick="editNode(currentNodeId)">修改节点</div>
         <div class="context-menu-item" onclick="deleteNode(currentNodeId)">删除节点</div>
+        <div class="context-menu-item" onclick="showSearchModal(currentNodeId)">查找文本</div>
     </div>
 
     <div class="modal" id="viewSelectedModal">
@@ -234,6 +235,20 @@
                 <button onclick="copyPromptTemplate()" class="control-button primary">复制</button>
                 <button onclick="usePromptTemplate()" class="control-button primary">使用</button>
                 <button onclick="closePromptModal()" class="control-button secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <h3>文本查找</h3>
+            <div class="form-group">
+                <label>搜索文本：</label>
+                <input type="text" id="searchText">
+            </div>
+            <div class="button-group">
+                <button onclick="searchNodes()" class="control-button primary">查找</button>
+                <button onclick="closeSearchModal()" class="control-button secondary">取消</button>
             </div>
         </div>
     </div>

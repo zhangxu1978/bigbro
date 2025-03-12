@@ -702,4 +702,16 @@ div[role='assistant'] {
 .button-group .secondary:hover {
     background-color: #e8e8e8;
 }
+
+.search-highlight {
+    background-color: #ffeb3b;
+    border: 2px solid #ffc107;
+    border-radius: 4px;
+    box-shadow: 0 0 5px rgba(255, 193, 7, 0.5);
+}
+
+.search-highlight > .tree-node-content {
+    font-weight: bold;
+    color: #d32f2f;
+}
 /* ... existing code ... */

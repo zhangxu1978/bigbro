@@ -8,9 +8,16 @@ const app = express();
 const port = 3000;
 const proxy = 'http://127.0.0.1:7890'; // 根据实际情况修改代理地址和端口
 const agent = new HttpsProxyAgent(proxy);
+
+// 导入搜索路由模块
+const searchRouter = require('./api/searchserver');
+
 // 中间件配置
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// 挂载搜索路由
+app.use('/api', searchRouter);
 
 // 读取配置文件
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, 'key.config'), 'utf8'));

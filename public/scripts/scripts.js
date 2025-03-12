@@ -2,6 +2,7 @@ let currentParentId = null;
 let currentNodeId = null;
 let isEditing = false;
 let originalContent = '';
+let currentSearchHighlights = [];
 
 // 获取树形数据
 async function fetchTreeData() {
@@ -448,6 +449,85 @@ async function viewNode(nodeId) {
         alert(error.message);
     }
 }
+function showSearchModal(nodeId) {
+    const modal = document.getElementById('searchModal');
+    modal.style.display = 'block';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+    
+    // 清除之前的高亮
+    clearSearchHighlights();
+    
+    // 隐藏菜单和遮罩层
+    document.getElementById('nodeContextMenu').style.display = 'none';
+    const overlay = document.querySelector('.menu-overlay');
+    if (overlay) overlay.remove();
+}
+
+function closeSearchModal() {
+    const modal = document.getElementById('searchModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    document.getElementById('searchText').value = '';
+}
+
+function clearSearchHighlights() {
+    currentSearchHighlights.forEach(nodeId => {
+        const element = document.querySelector(`.tree-node[data-id="${nodeId}"]`);
+        if (element) {
+            element.classList.remove('search-highlight');
+        }
+    });
+    currentSearchHighlights = [];
+}
+
+async function searchNodes() {
+    const searchText = document.getElementById('searchText').value.trim();
+    if (!searchText) {
+        alert('请输入要查找的文本');
+        return;
+    }
+    
+    clearSearchHighlights();
+    
+    try {
+        const response = await fetch(`/api/search?nodeId=${currentNodeId}&searchText=${encodeURIComponent(searchText)}`);
+        if (!response.ok) {
+            throw new Error('搜索失败');
+        }
+        
+        const matchedNodes = await response.json();
+        matchedNodes.forEach(nodeId => {
+            const element = document.querySelector(`.tree-node[data-id="${nodeId}"]`);
+            if (element) {
+                element.classList.add('search-highlight');
+                currentSearchHighlights.push(nodeId);
+                // 展开父节点以显示匹配的节点
+                let parent = element.parentElement.closest('.tree-node');
+                while (parent) {
+                    const toggle = parent.querySelector('.toggle');
+                    if (toggle && toggle.textContent === '►') {
+                        toggle.click();
+                    }
+                    parent = parent.parentElement.closest('.tree-node');
+                }
+            }
+        });
+        
+        if (matchedNodes.length === 0) {
+            alert('未找到匹配的节点');
+        }
+        
+        closeSearchModal();
+    } catch (error) {
+        console.error('Error:', error);
+        alert('搜索失败：' + error.message);
+    }
+}
+
 // 删除节点
 async function deleteNode(nodeId) {
     if (!confirm('确定要删除此节点吗？')) {
