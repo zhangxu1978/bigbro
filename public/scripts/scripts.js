@@ -730,9 +730,27 @@ function closeViewSelectedModal() {
 
 // 复制选中节点内容到剪贴板
 async function copySelectedContent() {
-    const content = document.getElementById('selectedNodesContent').innerHTML;
+    const contentElement = document.getElementById('selectedNodesContent');
+    // 创建一个临时的div来处理HTML内容
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = contentElement.innerHTML;
+    
+    // 获取纯文本内容，保留换行
+    const textContent = Array.from(tempDiv.childNodes)
+        .map(node => {
+            if (node.nodeType === Node.TEXT_NODE) {
+                return node.textContent.trim();
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                // 对于元素节点，获取其文本内容并添加换行
+                return node.textContent.trim() + '\n';
+            }
+            return '';
+        })
+        .filter(text => text) // 移除空字符串
+        .join('\n'); // 用换行符连接
+    
     try {
-        await navigator.clipboard.writeText(content);
+        await navigator.clipboard.writeText(textContent);
         alert('内容已复制到剪贴板');
     } catch (err) {
         console.error('复制失败:', err);
