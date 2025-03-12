@@ -101,11 +101,13 @@ function renderTree(node, level = 0) {
     if (node.children && node.children.length > 0) {
         const childrenContainer = document.createElement('div');
         childrenContainer.className = 'children-container';
+        childrenContainer.style.display = 'none';
         nodeElement.appendChild(childrenContainer);
         node.children.forEach(child => {
             const childElement = renderTree(child, level + 1);
             childrenContainer.appendChild(childElement);
         });
+        collapseButton.textContent = '+';
     }
 
     return nodeElement;
