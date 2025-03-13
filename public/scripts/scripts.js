@@ -429,6 +429,18 @@ function closeEditModal() {
 // 查看节点
 async function viewNode(nodeId) {
     try {
+        // 移除之前的current类
+        const previousCurrent = document.querySelector('.tree-node.current');
+        if (previousCurrent) {
+            previousCurrent.classList.remove('current');
+        }
+
+        // 为当前节点添加current类
+        const currentNode = document.querySelector(`.tree-node[data-id="${nodeId}"]`);
+        if (currentNode) {
+            currentNode.classList.add('current');
+        }
+
         const response = await fetch(`/api/node/${nodeId}`);
         if (!response.ok) {
             const error = await response.json();
