@@ -56,9 +56,9 @@ router.post('/node', (req, res) => {
     }
 
     // 验证父节点为书籍类型时才能添加其他类型节点
-    if (parentNode.id!="root"&& parentNode.type !== '书籍' && nodeType!== parentNode.type) {
-        return res.status(400).json({ error:parentNode.type+ '只有书籍节点才能添加其他类型的子节点' });
-    }
+    // if (parentNode.id!="root"&& parentNode.type !== '书籍' && nodeType!== parentNode.type) {
+    //     return res.status(400).json({ error:parentNode.type+ '只有书籍节点才能添加其他类型的子节点' });
+    // }
 
     // 生成新的节点ID
     function generateNodeId(parentNode) {
@@ -291,9 +291,9 @@ router.put('/node/:id/parent', (req, res) => {
     }
 
     // 检查是否会形成循环引用
-    if (isDescendant(nodeToMove, newParent)) {
-        return res.status(400).json({ error: '不能将节点移动到其子节点下' });
-    }
+    // if (isDescendant(nodeToMove, newParent)) {
+    //     return res.status(400).json({ error: '不能将节点移动到其子节点下' });
+    // }
 
     // 从原父节点中移除
     if (oldParent) {

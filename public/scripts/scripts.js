@@ -166,10 +166,10 @@ function handleDrop(e) {
     }
     
     // 不允许将节点拖放到其子节点中（防止循环引用）
-    if (isDescendant(draggedNode, this)) {
-        alert('不能将节点移动到其子节点下');
-        return false;
-    }
+    // if (isDescendant(draggedNode, this)) {
+    //     alert('不能将节点移动到其子节点下');
+    //     return false;
+    // }
     
     // 获取被拖动节点和目标节点的ID
     const draggedNodeId = draggedNode.getAttribute('data-id');

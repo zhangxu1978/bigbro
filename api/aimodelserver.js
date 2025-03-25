@@ -12,7 +12,9 @@ const agent = new HttpsProxyAgent(proxy);
 
 // 读取配置文件
 const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'key.config'), 'utf8'));
-
+// 读取助手配置文件
+const assistantsFile = path.join(__dirname, '..', 'data', 'assistants.json');
+let assistantsConfig = JSON.parse(fs.readFileSync(assistantsFile, 'utf8'));
 // 配置文件路径
 const modelConfigsFile = path.join(__dirname, '..', 'data', 'model_configs.json');
 
@@ -136,6 +138,7 @@ router.post('/chat', async (req, res) => {
             case 'doubao-r1':
             case 'siliconflowDeepSeek-R1':
             case 'siliconflowDeepSeek-V3':
+                case 'gongsi':
             case 'siliconflowQVQ-72B-Preview':
                 response = await axios.post(`${model.apiBase}/chat/completions`, {
                     model: model.model,
@@ -150,8 +153,8 @@ router.post('/chat', async (req, res) => {
                 writeToLog(messages, aiResponse1);
                 res.json({ response: aiResponse1 });
                 break;
-
-            default:
+       
+                        default:
                 res.status(400).json({ error: '不支持的服务提供商' });
         }
     } catch (error) {
