@@ -91,9 +91,19 @@ function renderTree(node, level = 0) {
         document.body.appendChild(overlay);
 
         const rect = textSpan.getBoundingClientRect();
+        const menuHeight = menu.offsetHeight || 200; // 预估菜单高度
+        const windowHeight = window.innerHeight;
+        const spaceBelow = windowHeight - rect.bottom;
+        
         menu.style.display = 'block';
         menu.style.left = rect.right + 'px';
-        menu.style.top = rect.top + 'px';
+        
+        // 如果下方空间不足以显示菜单，则向上弹出
+        if (spaceBelow < menuHeight && rect.top > menuHeight) {
+            menu.style.top = (rect.top - menuHeight) + 'px';
+        } else {
+            menu.style.top = rect.top + 'px';
+        }
     };
 
     nodeElement.appendChild(contentDiv);
