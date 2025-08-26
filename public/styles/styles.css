@@ -98,6 +98,98 @@ body {
     display: none;
 }
 
+/* 右侧侧边栏样式 */
+.right-sidebar-container {
+    /* 容器不再需要定位，因为按钮和侧边栏都使用了固定定位 */
+    position: relative;
+    z-index: 1000;
+}
+
+.sidebar-toggle {
+    position: fixed;
+    right: 0; /* 按钮位于屏幕最右侧 */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 80px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    border-radius: 5px 0 0 5px;
+    z-index: 1001;
+    transition: all 0.3s ease;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+}
+
+.sidebar-toggle:hover {
+    background-color: #2980b9;
+}
+
+.toggle-icon {
+    transition: transform 0.3s ease;
+}
+
+.right-sidebar {
+    position: fixed;
+    right: 40px; /* 侧边栏位于切换按钮的左侧 */
+    top: 50%;
+    transform: translateY(-50%) translateX(240px); /* 初始状态下完全隐藏 */
+    width: 200px;
+    background-color: #fff;
+    border-radius: 5px 0 0 5px;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    padding: 20px 10px;
+    transition: transform 0.3s ease;
+    overflow: hidden;
+}
+
+.right-sidebar.active {
+    transform: translateY(-50%) translateX(0);
+}
+
+.sidebar-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sidebar-button {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: #f8f9fa;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-align: left;
+    color: #333;
+}
+
+.sidebar-button:hover {
+    background-color: #e9ecef;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.button-icon {
+    font-size: 20px;
+    margin-right: 10px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.button-text {
+    font-size: 14px;
+    font-weight: 500;
+}
+
 .tree-node {
     cursor: pointer;
     display: flex;
@@ -725,5 +817,12 @@ div[role='assistant'] {
 .tree-node.current > .tree-node-content {
     font-weight: bold;
     color: #1976d2;
+}
+#start-type {
+    width: 60px;
+
+}
+#end-type {
+    width: 60px;
 }
 /* ... existing code ... */

@@ -1448,7 +1448,7 @@ function usePromptTemplate() {
         return;
     }
     
-    document.getElementById('user-input').value = template;
+    document.getElementById('user-input').value += template;
     closePromptModal();
     
     // 自动调整文本框高度

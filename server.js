@@ -214,6 +214,18 @@ const keywordRouter = require('./api/keywordserver');
 // 挂载关键字管理路由
 app.use('/api', keywordRouter);
 
+// 导入情节管理路由模块
+const plotRouter = require('./api/plotserver');
+
+// 挂载情节管理路由
+app.use('/api', plotRouter);
+
+// 导入人物卡管理路由模块
+const characterRouter = require('./api/characterserver');
+
+// 挂载人物卡管理路由
+app.use('/api', characterRouter);
+
 app.listen(port, () => {
     console.log(`服务器运行在 http://localhost:${port}`);
 })

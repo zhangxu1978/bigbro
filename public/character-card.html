@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人物卡管理</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./styles/assistant.css">
+    <link rel="stylesheet" href="./styles/character-card.css">
+</head>
+<body>
+    <div class="container">
+        <div class="character-list">
+            <h2>人物卡管理</h2>
+            <button onclick="showAddModal()" class="add-button">
+                <i class="fas fa-plus"></i> 添加人物卡
+            </button>
+            <div id="characterList" class="character-grid"></div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑人物卡的模态框 -->
+    <div id="characterModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">添加人物卡</h3>
+            <form id="characterForm">
+                <input type="hidden" id="characterId">
+                
+                <!-- 基本信息 -->
+                <div class="form-section">
+                    <h4>基本信息</h4>
+                    <div class="form-group character-row">
+                        <div class="input-field">
+                            <label for="characterName">姓名：</label>
+                            <input type="text" id="characterName" required>
+                        </div>
+                        <div class="input-field">
+                            <label for="characterAge">年龄：</label>
+                            <input type="text" id="characterAge">
+                        </div>
+                        <div class="input-field">
+                            <label for="characterGender">性别：</label>
+                            <select id="characterGender">
+                                <option value="男">男</option>
+                                <option value="女">女</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="characterAppearance">外貌特征：</label>
+                        <textarea id="characterAppearance" class="medium-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 背景故事 -->
+                <div class="form-section">
+                    <h4>背景故事</h4>
+                    <div class="form-group">
+                        <label for="characterBackground">成长经历与家庭背景：</label>
+                        <textarea id="characterBackground" class="large-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 性格特点 -->
+                <div class="form-section">
+                    <h4>性格特点</h4>
+                    <div class="form-group">
+                        <label for="characterPersonality">性格特征、行为模式、价值观：</label>
+                        <textarea id="characterPersonality" class="medium-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 能力特长 -->
+                <div class="form-section">
+                    <h4>能力特长</h4>
+                    <div class="form-group">
+                        <label for="characterAbilities">技能、能力、特殊天赋：</label>
+                        <textarea id="characterAbilities" class="medium-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 关系网络 -->
+                <div class="form-section">
+                    <h4>关系网络</h4>
+                    <div class="form-group">
+                        <label for="characterRelationships">与其他角色的关系：</label>
+                        <textarea id="characterRelationships" class="medium-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 成长轨迹 -->
+                <div class="form-section">
+                    <h4>成长轨迹</h4>
+                    <div class="form-group">
+                        <label for="characterGrowth">角色可能的成长变化：</label>
+                        <textarea id="characterGrowth" class="medium-description"></textarea>
+                    </div>
+                </div>
+                
+                <!-- 内心冲突 -->
+                <div class="form-section">
+                    <h4>内心冲突</h4>
+                    <div class="form-group">
+                        <label for="characterConflicts">角色面临的内心矛盾和挑战：</label>
+                        <textarea id="characterConflicts" class="medium-description"></textarea>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button type="button" onclick="closeModal()" class="control-button">取消</button>
+                    <button type="submit" class="control-button">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 查看人物卡详情的模态框 -->
+    <div id="viewCharacterModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeViewModal()">&times;</span>
+            <h3 id="viewModalTitle">人物卡详情</h3>
+            <div id="characterDetails" class="character-details">
+                <!-- 详情内容将通过JavaScript动态填充 -->
+            </div>
+            <div class="button-group">
+                <button onclick="useCharacterTemplate()" class="control-button primary">复制</button>
+                <button onclick="closeViewModal()" class="control-button secondary">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./scripts/character-card.js"></script>
+</body>
+</html>
