@@ -1024,17 +1024,41 @@ async function saveConfig() {
 async function loadModels() {
     try {
         const response = await fetch('/api/config');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         const select = document.getElementById('model-select');
-        
+
+        // 清空现有选项
+        select.innerHTML = '';
+
+        // 检查是否有模型数据
+        if (!data.models || data.models.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '暂无可用模型';
+            select.appendChild(option);
+            console.warn('没有获取到模型列表');
+            return;
+        }
+
         data.models.forEach(model => {
             const option = document.createElement('option');
             option.value = model.id;
             option.textContent = `${model.name} (${model.provider})`;
             select.appendChild(option);
         });
+
+        console.log(`成功加载 ${data.models.length} 个模型`);
     } catch (error) {
         console.error('加载模型列表失败:', error);
+        const select = document.getElementById('model-select');
+        select.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = '加载模型失败';
+        select.appendChild(option);
     }
 }
 

@@ -59,24 +59,51 @@ router.delete('/model-configs/:name', (req, res) => {
 router.get('/config', async (req, res) => {
     try {
         // 从本地代理获取模型列表
-        const response = await axios.get(`${PROXY_BASE_URL}/api/models/list`);
-        const models = response.data.models || [];
+        const response = await axios.get(`${PROXY_BASE_URL}/api/models/list`, {
+            timeout: 5000 // 5秒超时
+        });
+
+        console.log('本地代理返回数据:', JSON.stringify(response.data, null, 2));
+
+        // 处理不同的返回格式
+        let models = [];
+        if (Array.isArray(response.data)) {
+            // 如果直接返回数组
+            models = response.data;
+        } else if (response.data.models && Array.isArray(response.data.models)) {
+            // 如果返回 { models: [...] }
+            models = response.data.models;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+            // 如果返回 { data: [...] }
+            models = response.data.data;
+        }
 
         // 转换为前端需要的格式
         const publicConfig = {
             models: models.map(model => ({
-                id: model.id,
-                name: model.name || model.id,
-                provider: 'local-proxy',
-                model: model.id
+                id: model.id || model.model || 'unknown',
+                name: model.name || model.id || model.model || '未知模型',
+                provider: model.provider || 'local-proxy',
+                model: model.model || model.id || ''
             })),
             systemPrompts: {}
         };
 
+        console.log(`成功获取 ${publicConfig.models.length} 个模型`);
         res.json(publicConfig);
     } catch (error) {
         console.error('获取模型列表失败:', error.message);
-        res.status(500).json({ error: '获取模型列表失败: ' + error.message });
+        if (error.code === 'ECONNREFUSED') {
+            res.status(503).json({
+                error: '无法连接到本地代理服务，请确保服务已启动在 127.0.0.1:3100',
+                models: []
+            });
+        } else {
+            res.status(500).json({
+                error: '获取模型列表失败: ' + error.message,
+                models: []
+            });
+        }
     }
 });
 
