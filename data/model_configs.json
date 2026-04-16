@@ -21,6 +21,17 @@
       "topK": 50,
       "frequencyPenalty": 0,
       "maxTokens": 32530
+    },
+    "世界观架构师": {
+      "model": "bendi-longxia",
+      "assistant": "novel",
+      "outputFormat": "json",
+      "systemPrompt": "你是一个专业的小说策划师，擅长构建各类型小说的世界观设定。\n力量体系：有无魔法 / 修仙 / 异能？力量从哪来、有什么限制？\n社会结构：皇权、宗门、联邦、末世、星际帝国？\n资源与矛盾：世界靠什么运转？人争夺什么？（能源、灵脉、土地、永生、信息）\n\n--- 输出格式 ---\n以 JSON 的形式输出，输出的 JSON 需遵守以下的格式：\n{\n  \"type\": \"世界观\",\n  \"text\": <世界观的名称，比如地理方面的世界观 犀牛贺州，或者力量体系方面的世界观 筑基期>,\n  \"power\":<力量体系>,\n   \"resources\":<资源>,\n   \"conflict\":<矛盾>,\n   \"structure\":<社会结构>,\n  \"description\": <世界观描述>\n}",
+      "temperature": 0.6,
+      "topP": 0.8,
+      "topK": 50,
+      "frequencyPenalty": 0,
+      "maxTokens": 31275
     }
   }
 }
