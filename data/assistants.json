@@ -19,26 +19,6 @@
             "markdownFormat": "请用 Markdown 格式输出一个小说的人物及人物关系，结构如下：\n\n# 一级标题：书籍名称\n\n段落：主要角色简介\n\n## 二级标题：人物名称 \n\n段落：人物描述\n\n### 三级标题：人物属性 包括出生日期，年龄，性格特点，性别，行为逻辑，最关心的人\n\n段落：描述",
             "jsonFormat": "以 JSON 的形式输出，输出的 JSON 需遵守以下的格式：\n{\n  \"type\": \"角色\",\n  \"text\": <角色的名称>,\n  \"description\": <角色描述：包括出生日期，年龄，性格特点，性别，行为逻辑，最关心的人>\n}"
         },
-        "novel-timeline": {
-            "id": "novel-timeline",
-            "name": "章节策划师",
-            "prompt": "你是一个专业的小说策划师，擅长构建小说章节大纲。"
-        },
-        "editor": {
-            "id": "editor",
-            "name": "编辑助手",
-            "prompt": "你是一个专业的小说编辑，擅长对文字进行润色和修改。"
-        },
-        "writer": {
-            "id": "writer",
-            "name": "写作助手",
-            "prompt": "你是一个专业的小说作家，擅长对文字进行创作。"
-        },
-        "reconstructor": {
-            "id": "reconstructor",
-            "name": "重构助手",
-            "prompt": "你是一个专业的小说重构助手，请根据提供的上下文信息和要求，对章节内容进行重构。保持故事的连贯性和整体性。"
-        },
         "summarizer": {
             "id": "summarizer",
             "name": "总结助手",

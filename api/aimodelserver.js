@@ -81,7 +81,7 @@ router.get('/config', async (req, res) => {
         // 转换为前端需要的格式
         const publicConfig = {
             models: models.map(model => ({
-                id: model.id || model.model || 'unknown',
+                id: model['X-Model-ID'] || model.id || model.model || 'unknown',
                 name: model.name || model.id || model.model || '未知模型',
                 provider: model.provider || 'local-proxy',
                 model: model.model || model.id || ''

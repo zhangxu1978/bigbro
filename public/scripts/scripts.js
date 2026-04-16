@@ -937,7 +937,7 @@ async function loadConfig() {
         const config = data.configs[configName];
         
         if (config) {
-            document.getElementById('model-select').value = config.model || '';
+            document.getElementById('model-select').value = config.model || 'unknown';
             document.getElementById('assistant-select').value = config.assistant || '';
             document.getElementById('output-format').value = config.outputFormat || 'text';
             document.getElementById('system-prompt').value = config.systemPrompt || '';
@@ -981,7 +981,7 @@ async function saveConfig() {
     }
     
     const config = {
-        model: document.getElementById('model-select').value,
+        model: document.getElementById('model-select').value || 'unknown',
         assistant: document.getElementById('assistant-select').value,
         outputFormat: document.getElementById('output-format').value,
         systemPrompt: document.getElementById('system-prompt').value,
@@ -1045,7 +1045,7 @@ async function loadModels() {
 
         data.models.forEach(model => {
             const option = document.createElement('option');
-            option.value = model.id;
+            option.value = model.id || 'unknown';
             option.textContent = `${model.name} (${model.provider})`;
             select.appendChild(option);
         });
