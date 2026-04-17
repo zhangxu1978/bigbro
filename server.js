@@ -9,6 +9,7 @@ const port = 3033;
 const searchRouter = require('./api/searchserver');
 const assistantRouter = require('./api/assistantserver');
 const aiModelRouter = require('./api/aimodelserver');
+const lifeSimRouter = require('./api/lifesimserver');
 
 // 中间件配置
 app.use(bodyParser.json());
@@ -18,6 +19,7 @@ app.use(express.static('public'));
 app.use('/api', searchRouter);
 app.use('/api', assistantRouter);
 app.use('/api', aiModelRouter);
+app.use('/api', lifeSimRouter);
 
 // 确保data目录存在
 const dataDir = path.join(__dirname, 'data');
