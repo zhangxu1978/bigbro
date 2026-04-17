@@ -630,7 +630,9 @@
     </div>
     <div class="config-group">
       <label class="config-label">模型名称</label>
-      <input class="config-input" id="cfg-model" placeholder="moda-kimi2.5" />
+      <select class="config-input" id="cfg-model">
+        <option value="">加载中...</option>
+      </select>
     </div>
     <div class="config-group">
       <label class="config-label">API Key（可留空）</label>
@@ -751,12 +753,46 @@ const DEFAULT_CONFIG = {
 
 let cachedConfig = null;
 
+async function loadModels() {
+  try {
+    const response = await fetch('/api/config');
+    if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
+    const data = await response.json();
+    const select = document.getElementById('cfg-model');
+    select.innerHTML = '';
+    if (!data.models || data.models.length === 0) {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = '暂无可用模型';
+      select.appendChild(option);
+      return;
+    }
+    data.models.forEach(model => {
+      const option = document.createElement('option');
+      option.value = model.id || 'unknown';
+      option.textContent = `${model.name} (${model.provider})`;
+      select.appendChild(option);
+    });
+  } catch (error) {
+    console.error('加载模型列表失败:', error);
+    const select = document.getElementById('cfg-model');
+    select.innerHTML = '';
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = '加载模型失败';
+    select.appendChild(option);
+  }
+}
+
 async function loadConfig() {
   if (cachedConfig) return cachedConfig;
   try {
     const resp = await fetch(`${API_BASE}/config`);
     if (!resp.ok) throw new Error('加载配置失败');
     cachedConfig = await resp.json();
+    if (cachedConfig.apiUrl && cachedConfig.apiUrl.includes('localhost')) {
+      cachedConfig.apiUrl = cachedConfig.apiUrl.replace('localhost', window.location.hostname);
+    }
     return cachedConfig;
   } catch (err) {
     console.error('加载配置失败，使用默认配置:', err);
@@ -765,8 +801,12 @@ async function loadConfig() {
 }
 
 async function saveConfig() {
+  let apiUrl = document.getElementById('cfg-api-url').value || DEFAULT_CONFIG.apiUrl;
+  if (apiUrl.includes('localhost')) {
+    apiUrl = apiUrl.replace('localhost', window.location.hostname);
+  }
   const cfg = {
-    apiUrl: document.getElementById('cfg-api-url').value || DEFAULT_CONFIG.apiUrl,
+    apiUrl: apiUrl,
     model: document.getElementById('cfg-model').value || DEFAULT_CONFIG.model,
     apiKey: document.getElementById('cfg-key').value || '',
     maxTokens: parseInt(document.getElementById('cfg-tokens').value) || DEFAULT_CONFIG.maxTokens,
@@ -787,9 +827,20 @@ async function saveConfig() {
 }
 
 async function initConfigScreen() {
+  await loadModels();
   const cfg = await loadConfig();
   document.getElementById('cfg-api-url').value = cfg.apiUrl;
-  document.getElementById('cfg-model').value = cfg.model;
+  const modelSelect = document.getElementById('cfg-model');
+  if (cfg.model) {
+    const existingOption = Array.from(modelSelect.options).find(opt => opt.value === cfg.model);
+    if (!existingOption) {
+      const option = document.createElement('option');
+      option.value = cfg.model;
+      option.textContent = cfg.model;
+      modelSelect.insertBefore(option, modelSelect.firstChild);
+    }
+    modelSelect.value = cfg.model;
+  }
   document.getElementById('cfg-key').value = cfg.apiKey;
   document.getElementById('cfg-tokens').value = cfg.maxTokens;
 }

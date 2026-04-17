@@ -32,6 +32,17 @@
       "topK": 50,
       "frequencyPenalty": 0,
       "maxTokens": 31275
+    },
+    "龙虾通用助手": {
+      "model": "bendi-longxia",
+      "assistant": "default",
+      "outputFormat": "text",
+      "systemPrompt": "你是一个专业的AI助手。",
+      "temperature": 0.6,
+      "topP": 0.8,
+      "topK": 50,
+      "frequencyPenalty": 0,
+      "maxTokens": 31275
     }
   }
 }
