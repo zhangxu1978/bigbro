@@ -1,4 +1,4 @@
-﻿// ════════════════════════════════════════
+// ════════════════════════════════════════
 //  API 基础配置
 // ════════════════════════════════════════
 const API_BASE = '/api/lifesim';
@@ -163,6 +163,8 @@ async function saveCurrentGame() {
       desc: gameState.worldDesc,
       type: gameState.worldType,
       tags: gameState.worldTags || [],
+      storylines: gameState.storylines || { main: '', hidden: '', romance: '' },
+      importantCharacters: gameState.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' },
       savedAt: Date.now(),
       gameState: { ...gameState },
       messages: [...gameMessages]
@@ -174,8 +176,17 @@ async function saveCurrentGame() {
     });
     if (!resp.ok) throw new Error('存档失败');
     showToast('存档成功');
-  } catch (err) {
+  }
+  catch (err) {
     showToast('存档失败: ' + err.message);
+  }
+}
+
+function confirmExitGame() {
+  if (confirm('确定要退出游戏吗？进度将会保存。')) {
+    saveCurrentGame();
+    // 可以在这里添加重定向或其他退出逻辑
+    window.location.href = 'index.html';
   }
 }
 
@@ -243,7 +254,19 @@ let creatorState = {
   powerSystem: '',
   societyStructure: '',
   specialElement: '',
-  playerBackground: ''
+  playerBackground: '',
+  storylines: {
+    main: '',
+    hidden: '',
+    romance: ''
+  },
+  importantCharacters: {
+    heroine: '',
+    mentor: '',
+    friend: '',
+    enemy: '',
+    rival: ''
+  }
 };
 let isCreatorGenerating = false;
 let creatorQuestionCount = 0;
@@ -260,8 +283,10 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
 ## 对话流程
 1. 首先友好地打招呼，并给出选项让玩家选择
 2. 根据玩家的选择，逐步提问关于世界的各方面
-3. 在收集到足够信息后，给出世界构想供玩家确认
-4. 最后确认玩家背景设定，准备开始游戏
+3. 深入探讨主角的故事线：明线、暗线和感情线
+4. 设定重要角色：女主、良师、益友、仇敌、对手等
+5. 在收集到足够信息后，给出世界构想供玩家确认
+6. 最后确认玩家背景设定，准备开始游戏
 
 ## 重要规则
 - **始终使用选项引导**：每次回复必须提供 3-4 个选项让玩家选择，不要只发问
@@ -294,7 +319,19 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
   "powerSystem": "力量体系描述",
   "societyStructure": "社会结构描述",
   "specialElement": "特殊元素描述",
-  "playerBackground": "为玩家安排的出生背景描述（要积极正面，有生存可能）"
+  "playerBackground": "为玩家安排的出生背景描述（要积极正面，有生存可能）",
+  "storylines": {
+    "main": "明线故事描述",
+    "hidden": "暗线故事描述",
+    "romance": "感情线描述"
+  },
+  "importantCharacters": {
+    "heroine": "女主/重要女性角色描述",
+    "mentor": "良师/导师角色描述",
+    "friend": "益友/伙伴角色描述",
+    "enemy": "仇敌/反派角色描述",
+    "rival": "对手/竞争者角色描述"
+  }
 }
 \`\`\`
 
@@ -311,7 +348,19 @@ function initWorldCreator() {
     powerSystem: '',
     societyStructure: '',
     specialElement: '',
-    playerBackground: ''
+    playerBackground: '',
+    storylines: {
+      main: '',
+      hidden: '',
+      romance: ''
+    },
+    importantCharacters: {
+      heroine: '',
+      mentor: '',
+      friend: '',
+      enemy: '',
+      rival: ''
+    }
   };
   creatorQuestionCount = 0;
   isCreatorGenerating = false;
@@ -509,6 +558,8 @@ function applyCreatorReady(parsed) {
   creatorState.societyStructure = parsed.societyStructure || '';
   creatorState.specialElement = parsed.specialElement || '';
   creatorState.playerBackground = parsed.playerBackground || '';
+  creatorState.storylines = parsed.storylines || { main: '', hidden: '', romance: '' };
+  creatorState.importantCharacters = parsed.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' };
   
   const chat = document.getElementById('creator-chat');
   
@@ -523,6 +574,19 @@ function applyCreatorReady(parsed) {
     <div class="creator-summary-item"><strong>社会结构：</strong>${creatorState.societyStructure}</div>
     ${creatorState.specialElement ? `<div class="creator-summary-item"><strong>特殊元素：</strong>${creatorState.specialElement}</div>` : ''}
     <div class="creator-summary-item"><strong>你的出身：</strong>${creatorState.playerBackground}</div>
+    
+    <h4 style="margin-top:20px;margin-bottom:10px">📜 故事线</h4>
+    ${creatorState.storylines.main ? `<div class="creator-summary-item"><strong>明线：</strong>${creatorState.storylines.main}</div>` : ''}
+    ${creatorState.storylines.hidden ? `<div class="creator-summary-item"><strong>暗线：</strong>${creatorState.storylines.hidden}</div>` : ''}
+    ${creatorState.storylines.romance ? `<div class="creator-summary-item"><strong>感情线：</strong>${creatorState.storylines.romance}</div>` : ''}
+    
+    <h4 style="margin-top:20px;margin-bottom:10px">👥 重要角色</h4>
+    ${creatorState.importantCharacters.heroine ? `<div class="creator-summary-item"><strong>女主：</strong>${creatorState.importantCharacters.heroine}</div>` : ''}
+    ${creatorState.importantCharacters.mentor ? `<div class="creator-summary-item"><strong>良师：</strong>${creatorState.importantCharacters.mentor}</div>` : ''}
+    ${creatorState.importantCharacters.friend ? `<div class="creator-summary-item"><strong>益友：</strong>${creatorState.importantCharacters.friend}</div>` : ''}
+    ${creatorState.importantCharacters.enemy ? `<div class="creator-summary-item"><strong>仇敌：</strong>${creatorState.importantCharacters.enemy}</div>` : ''}
+    ${creatorState.importantCharacters.rival ? `<div class="creator-summary-item"><strong>对手：</strong>${creatorState.importantCharacters.rival}</div>` : ''}
+    
     <button class="creator-start-btn" onclick="startGameFromCreator()">🚀 开始冒险</button>
   `;
   chat.appendChild(summary);
@@ -562,6 +626,10 @@ async function startGameFromCreator() {
   gameState.worldDesc = finalWorldData.worldDesc;
   gameState.worldType = 'custom';
   gameState.worldTags = finalWorldData.worldTags || [];
+  gameState.storylines = finalWorldData.storylines || { main: '', hidden: '', romance: '' };
+  gameState.importantCharacters = finalWorldData.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' };
+  // 记录构建者（大模型名称）
+  gameState.builder = cfg.model || '未知模型';
   
   const customSystemPrompt = `你是一个沉浸式文字冒险游戏的叙事引擎。你要扮演"命运之书"——一个全知全能的叙事者。
 
@@ -575,6 +643,12 @@ async function startGameFromCreator() {
 **社会结构：${finalWorldData.societyStructure}**
 ${finalWorldData.specialElement ? `**特殊元素：${finalWorldData.specialElement}**\n` : ''}
 **玩家出身：${finalWorldData.playerBackground}**
+
+${finalWorldData.storylines ? `## 故事线
+**明线：${finalWorldData.storylines.main || '未知'}\n**暗线：${finalWorldData.storylines.hidden || '未知'}\n**感情线：${finalWorldData.storylines.romance || '未知'}\n` : ''}
+
+${finalWorldData.importantCharacters ? `## 重要角色
+**女主：${finalWorldData.importantCharacters.heroine || '未知'}\n**良师：${finalWorldData.importantCharacters.mentor || '未知'}\n**益友：${finalWorldData.importantCharacters.friend || '未知'}\n**仇敌：${finalWorldData.importantCharacters.enemy || '未知'}\n**对手：${finalWorldData.importantCharacters.rival || '未知'}\n` : ''}
 
 请严格遵循以上设定推演剧情，保持世界观一致性。
 
@@ -613,7 +687,7 @@ ${finalWorldData.specialElement ? `**特殊元素：${finalWorldData.specialElem
   
   showScreen('game');
   document.getElementById('game-world-name').textContent = gameState.worldName;
-  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 构建完成`;
+  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 构建完成 · 构建者：${gameState.builder}`;
   
   const storyArea = document.getElementById('story-area');
   storyArea.innerHTML = '';
@@ -652,11 +726,24 @@ function initNewGameState() {
     worldDesc: '',
     worldType: 'new',
     worldTags: [],
+    storylines: {
+      main: '',
+      hidden: '',
+      romance: ''
+    },
+    importantCharacters: {
+      heroine: '',
+      mentor: '',
+      friend: '',
+      enemy: '',
+      rival: ''
+    },
     turn: 0,
     age: 0,
     isDead: false,
     characterStatus: '',
     worldRules: '', // AI 秘密生成，玩家不可见
+    builder: '', // 构建者（大模型名称）
   };
 }
 
@@ -857,6 +944,10 @@ async function startNewGame() {
   const storyArea = document.getElementById('story-area');
   storyArea.innerHTML = '';
   
+  // 记录构建者（大模型名称）
+  const cfg = await loadConfig();
+  gameState.builder = cfg.model || '未知模型';
+  
   appendSystemMsg('命运之书正在为你构建一个全新的世界...');
   showLoadingInOptions();
   setInputDisabled(true);
@@ -896,7 +987,7 @@ async function loadGame(world) {
 
   showScreen('game');
   document.getElementById('game-world-name').textContent = gameState.worldName || '未知世界';
-  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 继续冒险`;
+  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 继续冒险${gameState.builder ? ' · 构建者：' + gameState.builder : ''}`;
 
   // 重建剧情区（只显示最后几条叙事）
   const storyArea = document.getElementById('story-area');
@@ -1050,6 +1141,7 @@ function showGameOver(parsed) {
   const summary = document.getElementById('gameover-summary');
   summary.innerHTML = `
     <strong>世界：${gameState.worldName}</strong><br>
+    ${gameState.builder ? `<strong>构建者：${gameState.builder}</strong><br>` : ''}
     <strong>享年：${gameState.age} 岁</strong><br>
     <strong>历经：${gameState.turn} 个人生节点</strong><br><br>
     ${parsed.deathSummary || '你在这个世界留下了自己的印记。'}
