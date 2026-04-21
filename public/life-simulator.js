@@ -802,6 +802,24 @@ function parseAIResponse(text) {
     const start = text.indexOf('{');
     const end = text.lastIndexOf('}');
     if (start >= 0 && end > start) jsonStr = text.slice(start, end + 1);
+    else jsonStr = ''; // 没有找到 JSON
+  }
+  
+  // 如果没有有效的 JSON 内容，直接返回容错结果
+  if (!jsonStr || jsonStr.trim() === '') {
+    return {
+      narrative: text,
+      age: gameState.age || 0,
+      timeSkip: '',
+      status: '',
+      options: [
+        { id: 1, text: '继续...' },
+        { id: 2, text: '思考当前处境' },
+        { id: 3, text: '探索周围环境' }
+      ],
+      isDead: false,
+      deathSummary: null
+    };
   }
   
   try {
@@ -935,7 +953,8 @@ async function selectOption(text) {
 
   gameMessages.push({ role: 'user', content: `我的选择：${text}` });
   gameState.turn++;
-  document.getElementById('stat-turn').textContent = gameState.turn;
+  document.getElementById('game-turn').textContent = gameState.turn;
+  document.getElementById('game-gold').textContent = gameState.gold || 0;
 
   try {
     const rawResp = await callAI(gameMessages);
@@ -1092,11 +1111,11 @@ function showLoadingInOptions() {
 }
 
 function setInputDisabled(disabled) {
-  const input = document.getElementById('custom-input');
-  const btn = document.getElementById('send-btn');
+  const input = document.getElementById('game-input');
+  const btn = document.getElementById('game-send-btn');
   const optBtns = document.querySelectorAll('.opt-btn');
-  input.disabled = disabled;
-  btn.disabled = disabled;
+  if (input) input.disabled = disabled;
+  if (btn) btn.disabled = disabled;
   optBtns.forEach(b => b.disabled = disabled);
 }
 
@@ -1140,6 +1159,10 @@ function handleAIError(err) {
   isGenerating = false;
   setInputDisabled(false);
   const storyArea = document.getElementById('story-area');
+  if (!storyArea) {
+    console.error('story-area not found, error:', err);
+    return;
+  }
   const div = document.createElement('div');
   div.className = 'msg msg-system';
   div.style.color = 'var(--danger)';

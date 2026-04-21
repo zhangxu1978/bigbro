@@ -107,6 +107,7 @@
       <div class="stat-bar">
         <div class="stat-item">回合: <span id="game-turn">0</span></div>
         <div class="stat-item">金币: <span id="game-gold">0</span></div>
+        <div class="stat-item">年龄: <span id="stat-age">0</span></div>
       </div>
     </div>
     <div class="story-area" id="story-area">
@@ -122,7 +123,10 @@
       </div>
     </div>
     <div class="game-footer">
-      <div class="footer-info" id="footer-info">等待开始...</div>
+      <div class="footer-info">
+        <span id="footer-info">等待开始...</span>
+        <span id="footer-world-type"></span>
+      </div>
       <div class="footer-actions">
         <button class="footer-btn" onclick="saveCurrentGame()">💾 存档</button>
         <button class="footer-btn danger" onclick="confirmExitGame()">✕ 退出</button>
