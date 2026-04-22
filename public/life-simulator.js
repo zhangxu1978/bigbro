@@ -218,6 +218,10 @@ async function renderWorldsGrid() {
     card.className = 'world-card';
     const tagsHtml = (world.tags || []).map(t => `<span class="wc-tag">${t}</span>`).join('');
     const date = new Date(world.savedAt).toLocaleDateString('zh-CN');
+    const isThirdPerson = world.gameState?.narrativeMode === 'third_person';
+    const playerName = world.gameState?.playerName || '';
+    const modeText = isThirdPerson ? '第三人称' : '第二人称';
+    const nameText = playerName ? ` · ${playerName}` : '';
     card.innerHTML = `
       <button class="del-btn" onclick="deleteWorld('${world.id}', event)">✕</button>
       <div class="wc-icon">🌍</div>
@@ -225,6 +229,7 @@ async function renderWorldsGrid() {
       <div class="wc-desc">${world.desc || '一个充满神秘的世界...'}</div>
       <div class="wc-meta">
         ${tagsHtml}
+        <span class="wc-tag">${modeText}${nameText}</span>
         <span class="wc-tag">上次: ${date}</span>
         <span class="wc-tag">回合 ${world.turn || 0}</span>
       </div>
@@ -246,6 +251,8 @@ let isGenerating = false;
 // ════════════════════════════════════════
 let creatorMessages = [];
 let creatorState = {
+  playerName: '',
+  narrativeMode: 'second_person',
   worldName: '',
   worldType: '',
   worldTags: [],
@@ -281,7 +288,7 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
 - 你对各种世界观设定（修仙、科幻、奇幻、末日等）都有深入了解
 
 ## 对话流程
-1. 首先友好地打招呼，并给出选项让玩家选择
+1. 首先友好地打招呼，询问玩家的名字和想要的叙事视角
 2. 根据玩家的选择，逐步提问关于世界的各方面
 3. 深入探讨主角的故事线：明线、暗线和感情线
 4. 设定重要角色：女主、良师、益友、仇敌、对手等
@@ -311,6 +318,8 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
 \`\`\`json
 {
   "ready": true,
+  "playerName": "主角名字",
+  "narrativeMode": "third_person",
   "worldName": "世界名称",
   "worldType": "世界类型（如修仙、赛博朋克等）",
   "worldDesc": "世界一句话描述",
@@ -340,6 +349,8 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
 function initWorldCreator() {
   creatorMessages = [];
   creatorState = {
+    playerName: '',
+    narrativeMode: 'second_person',
     worldName: '',
     worldType: '',
     worldTags: [],
@@ -549,6 +560,8 @@ function updateCreatorHints(options) {
 }
 
 function applyCreatorReady(parsed) {
+  creatorState.playerName = parsed.playerName || '';
+  creatorState.narrativeMode = parsed.narrativeMode || 'second_person';
   creatorState.worldName = parsed.worldName || '未知世界';
   creatorState.worldType = parsed.worldType || '';
   creatorState.worldTags = parsed.worldTags || [];
@@ -562,18 +575,21 @@ function applyCreatorReady(parsed) {
   creatorState.importantCharacters = parsed.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' };
   
   const chat = document.getElementById('creator-chat');
+  const isThirdPerson = creatorState.narrativeMode === 'third_person';
   
   const summary = document.createElement('div');
   summary.className = 'creator-summary';
   summary.innerHTML = `
     <h3>✨ 世界构建完成！</h3>
+    <div class="creator-summary-item"><strong>叙事视角：</strong>${isThirdPerson ? '第三人称（旁观者视角）' : '第二人称（沉浸视角）'}</div>
+    ${creatorState.playerName ? `<div class="creator-summary-item"><strong>主角名字：</strong>${creatorState.playerName}</div>` : ''}
     <div class="creator-summary-item"><strong>世界名称：</strong>${creatorState.worldName}</div>
     <div class="creator-summary-item"><strong>世界类型：</strong>${creatorState.worldType}</div>
     <div class="creator-summary-item"><strong>氛围：</strong>${creatorState.atmosphere}</div>
     <div class="creator-summary-item"><strong>力量体系：</strong>${creatorState.powerSystem}</div>
     <div class="creator-summary-item"><strong>社会结构：</strong>${creatorState.societyStructure}</div>
     ${creatorState.specialElement ? `<div class="creator-summary-item"><strong>特殊元素：</strong>${creatorState.specialElement}</div>` : ''}
-    <div class="creator-summary-item"><strong>你的出身：</strong>${creatorState.playerBackground}</div>
+    <div class="creator-summary-item"><strong>${isThirdPerson ? '主角' : '你的'}出身：</strong>${creatorState.playerBackground}</div>
     
     <h4 style="margin-top:20px;margin-bottom:10px">📜 故事线</h4>
     ${creatorState.storylines.main ? `<div class="creator-summary-item"><strong>明线：</strong>${creatorState.storylines.main}</div>` : ''}
@@ -622,16 +638,25 @@ async function startGameFromCreator() {
   }
   
   gameState = initNewGameState();
+  gameState.playerName = finalWorldData.playerName || '';
+  gameState.narrativeMode = finalWorldData.narrativeMode || 'second_person';
   gameState.worldName = finalWorldData.worldName;
   gameState.worldDesc = finalWorldData.worldDesc;
   gameState.worldType = 'custom';
   gameState.worldTags = finalWorldData.worldTags || [];
   gameState.storylines = finalWorldData.storylines || { main: '', hidden: '', romance: '' };
   gameState.importantCharacters = finalWorldData.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' };
-  // 记录构建者（大模型名称）
   gameState.builder = cfg.model || '未知模型';
   
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '主角';
+  
   const customSystemPrompt = `你是一个沉浸式文字冒险游戏的叙事引擎。你要扮演"命运之书"——一个全知全能的叙事者。
+
+## 叙事模式
+- 视角模式：${isThirdPerson ? '第三人称旁观视角' : '第二人称沉浸视角'}
+- 主角名字：${playerName}
+- 叙事人称：${isThirdPerson ? '使用"' + playerName + '"来指代主角，用旁观者视角描述' : '使用"你"来指代主角'}
 
 ## 世界设定（由玩家与世界守护者共同构建）
 
@@ -653,12 +678,14 @@ ${finalWorldData.importantCharacters ? `## 重要角色
 请严格遵循以上设定推演剧情，保持世界观一致性。
 
 ## 游戏规则
-1. 玩家初始背景是上述设定的出身，请围绕这个背景展开
-2. 每次回复推进剧情，时间跨度自然流逝
-3. 保持张力、悬念和情感起伏
-4. 死亡应有意义，不随机惩罚
+1. ${isThirdPerson ? '使用第三人称，用"' + playerName + '"指代主角，以旁观者视角描述主角的经历和选择' : '使用第二人称，用"你"指代主角，让玩家沉浸其中'}
+2. 玩家初始背景是上述设定的出身，请围绕这个背景展开
+3. 每次回复推进剧情，时间跨度自然流逝
+4. 保持张力、悬念和情感起伏
+5. 死亡应有意义，不随机惩罚
 
 ## 回复格式（严格遵守）——必须是合法 JSON：
+\`\`\`json
 {
   "narrative": "叙事内容（300-600字）",
   "age": 当前年龄（数字）,
@@ -675,8 +702,9 @@ ${finalWorldData.importantCharacters ? `## 重要角色
   "isDead": false,
   "deathSummary": null
 }
+\`\`\`
 
-死亡时：{"narrative":"...","age":N,"isDead":true,"deathSummary":"...","options":[],"status":""}
+死亡时：\`\`\`json{"narrative":"...","age":N,"isDead":true,"deathSummary":"...","options":[],"status":""}\`\`\`
 
 记住：你就是这个世界的神。让冒险值得被记住。`;
   
@@ -687,11 +715,11 @@ ${finalWorldData.importantCharacters ? `## 重要角色
   
   showScreen('game');
   document.getElementById('game-world-name').textContent = gameState.worldName;
-  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 构建完成 · 构建者：${gameState.builder}`;
+  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · ${isThirdPerson ? '第三人称' : '第二人称'} · ${gameState.builder}`;
   
   const storyArea = document.getElementById('story-area');
   storyArea.innerHTML = '';
-  appendSystemMsg(`世界「${gameState.worldName}」构建完成，冒险即将开始...`);
+  appendSystemMsg(`世界「${gameState.worldName}」构建完成，${isThirdPerson ? playerName + '的冒险即将开始...' : '你的冒险即将开始...'}`);
   showLoadingInOptions();
   setInputDisabled(true);
   
@@ -742,8 +770,10 @@ function initNewGameState() {
     age: 0,
     isDead: false,
     characterStatus: '',
-    worldRules: '', // AI 秘密生成，玩家不可见
-    builder: '', // 构建者（大模型名称）
+    worldRules: '',
+    builder: '',
+    playerName: '',
+    narrativeMode: 'second_person',
   };
 }
 
@@ -782,8 +812,18 @@ async function callAI(messages) {
 //  系统提示词
 // ════════════════════════════════════════
 function buildSystemPrompt(isNew) {
+  const playerName = gameState.playerName || '主角';
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const pronoun = isThirdPerson ? playerName : '你';
+  const pronounRef = isThirdPerson ? playerName : '你';
+
   if (isNew) {
     return `你是一个沉浸式文字冒险游戏的叙事引擎。你要扮演"命运之书"——一个全知全能的叙事者。
+
+## 叙事模式
+- 视角模式：${isThirdPerson ? '第三人称旁观视角' : '第二人称沉浸视角'}
+- 主角名字：${playerName}
+- 叙事人称：${isThirdPerson ? '使用"' + playerName + '"来指代主角，用旁观者视角描述' : '使用"你"来指代主角'}
 
 ## 核心职责
 
@@ -843,7 +883,7 @@ function buildSystemPrompt(isNew) {
    \`\`\`
 
 5. **叙事风格**
-   - 第二人称叙事（"你"）
+   - ${isThirdPerson ? '第三人称叙事，用"' + playerName + '"指代主角，以旁观者视角描述主角的经历和选择' : '第二人称叙事（"你"）'}
    - 充满画面感和代入感
    - 情节推进要有节奏感，不要拖沓
    - 世界要有神秘感，让玩家想要探索
@@ -854,7 +894,13 @@ function buildSystemPrompt(isNew) {
     return `你是一个沉浸式文字冒险游戏的叙事引擎，继续之前的冒险故事。
 请根据之前的对话历史继续推演剧情，保持世界观、人物关系和剧情逻辑的一致性。
 
+## 叙事模式
+- 视角模式：${isThirdPerson ? '第三人称旁观视角' : '第二人称沉浸视角'}
+- 主角名字：${playerName}
+- 叙事人称：${isThirdPerson ? '使用"' + playerName + '"来指代主角，用旁观者视角描述' : '使用"你"来指代主角'}
+
 回复格式（严格遵守）——必须是合法 JSON：
+\`\`\`json
 {
   "narrative": "叙事内容（300-600字）",
   "age": 当前年龄（数字）,
@@ -871,8 +917,9 @@ function buildSystemPrompt(isNew) {
   "isDead": false,
   "deathSummary": null
 }
+\`\`\`
 
-死亡时：{"narrative":"...","age":N,"isDead":true,"deathSummary":"...","options":[],"status":""}`;
+死亡时：\`\`\`json{"narrative":"...","age":N,"isDead":true,"deathSummary":"...","options":[],"status":""}\`\`\``;
   }
 }
 
@@ -987,7 +1034,12 @@ async function loadGame(world) {
 
   showScreen('game');
   document.getElementById('game-world-name').textContent = gameState.worldName || '未知世界';
-  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · 继续冒险${gameState.builder ? ' · 构建者：' + gameState.builder : ''}`;
+  
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '';
+  const modeText = isThirdPerson ? '第三人称' : '第二人称';
+  const nameText = playerName ? ` · ${playerName}` : '';
+  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · ${modeText}${nameText} · ${gameState.builder || ''}`;
 
   // 重建剧情区（只显示最后几条叙事）
   const storyArea = document.getElementById('story-area');
@@ -1138,13 +1190,18 @@ function handleDeath(parsed) {
 }
 
 function showGameOver(parsed) {
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '';
+  const protagonist = isThirdPerson && playerName ? playerName : '你';
   const summary = document.getElementById('gameover-summary');
   summary.innerHTML = `
     <strong>世界：${gameState.worldName}</strong><br>
     ${gameState.builder ? `<strong>构建者：${gameState.builder}</strong><br>` : ''}
+    ${playerName ? `<strong>主角：${playerName}</strong><br>` : ''}
+    <strong>视角：${isThirdPerson ? '第三人称' : '第二人称'}</strong><br>
     <strong>享年：${gameState.age} 岁</strong><br>
     <strong>历经：${gameState.turn} 个人生节点</strong><br><br>
-    ${parsed.deathSummary || '你在这个世界留下了自己的印记。'}
+    ${parsed.deathSummary || `${protagonist}在这个世界留下了自己的印记。`}
   `;
   showScreen('gameover');
 }
@@ -1219,8 +1276,12 @@ function scrollStoryToBottom() {
 }
 
 function showStatus() {
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '';
   const content = document.getElementById('status-content');
   content.textContent = `世界：${gameState.worldName || '未知'}
+主角：${playerName || '未命名'}
+视角：${isThirdPerson ? '第三人称' : '第二人称'}
 描述：${gameState.worldDesc || ''}
 年龄：${gameState.age || 0} 岁
 经历节点：${gameState.turn || 0}
