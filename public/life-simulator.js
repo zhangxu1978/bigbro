@@ -316,10 +316,10 @@ const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，
   "worldDesc": "世界一句话描述",
   "worldTags": ["标签1", "标签2", "标签3", "标签4", "标签5"],
   "atmosphere": "世界氛围描述",
-  "powerSystem": "力量体系描述",
-  "societyStructure": "社会结构描述",
+  "powerSystem": "力量体系描述（争夺的资源，一般是带来力量的资源，如科技、资源、人口、灵石、咒语等）",
+  "societyStructure": "社会结构描述(社会关系和社会矛盾)",
   "specialElement": "特殊元素描述",
-  "playerBackground": "为玩家安排的出生背景描述（要积极正面，有生存可能）",
+  "playerBackground": "为玩家安排的出生背景描述",
   "storylines": {
     "main": "明线故事描述",
     "hidden": "暗线故事描述",
