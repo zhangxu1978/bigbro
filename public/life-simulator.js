@@ -416,6 +416,17 @@ function appendCreatorMsg(role, content, options) {
         btn.className = 'creator-opt-btn';
         btn.textContent = opt.text;
         btn.onclick = () => selectCreatorOption(opt.text);
+        
+        const editBtn = document.createElement('button');
+        editBtn.className = 'creator-opt-edit-btn';
+        editBtn.innerHTML = '✎';
+        editBtn.title = '发送到输入框';
+        editBtn.onclick = (e) => {
+          e.stopPropagation();
+          sendCreatorOptionToInput(opt.text);
+        };
+        
+        btn.appendChild(editBtn);
         optionsDiv.appendChild(btn);
       });
       div.appendChild(optionsDiv);
@@ -1243,8 +1254,19 @@ function renderOptions(options) {
   options.forEach((opt, i) => {
     const btn = document.createElement('button');
     btn.className = 'opt-btn';
-    btn.innerHTML = `<span class="opt-num">${i + 1}.</span><span>${opt.text}</span>`;
+    btn.innerHTML = `<span class="opt-num">${i + 1}.</span><span class="opt-text">${opt.text}</span>`;
     btn.onclick = () => selectOption(opt.text);
+    
+    const editBtn = document.createElement('button');
+    editBtn.className = 'opt-edit-btn';
+    editBtn.innerHTML = '✎';
+    editBtn.title = '发送到输入框';
+    editBtn.onclick = (e) => {
+      e.stopPropagation();
+      sendOptionToInput(opt.text);
+    };
+    
+    btn.appendChild(editBtn);
     list.appendChild(btn);
   });
 }
@@ -1273,6 +1295,22 @@ function scrollStoryToBottom() {
   requestAnimationFrame(() => {
     area.scrollTop = area.scrollHeight;
   });
+}
+
+function sendOptionToInput(text) {
+  const input = document.getElementById('game-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
+}
+
+function sendCreatorOptionToInput(text) {
+  const input = document.getElementById('creator-input');
+  if (input) {
+    input.value = text;
+    input.focus();
+  }
 }
 
 function showStatus() {
