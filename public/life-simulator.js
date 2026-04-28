@@ -921,7 +921,32 @@ async function callAI(messages) {
   }
 
   const data = await resp.json();
-  return data.choices?.[0]?.message?.content || '';
+  const content = data.choices?.[0]?.message?.content || '';
+
+  // 更新Token使用量显示
+  if (data.usage) {
+    updateTokenDisplay(data.usage);
+  }
+
+  return content;
+}
+
+function updateTokenDisplay(usage) {
+  const totalTokens = usage.total_tokens || 0;
+  const maxTokensLimit = usage.max_tokens_limit || 900000;
+
+  const tokenBar = document.getElementById('token-bar');
+  const tokenValue = document.getElementById('token-value');
+
+  if (tokenBar && tokenValue) {
+    const percentage = Math.min((totalTokens / maxTokensLimit) * 100, 100);
+    tokenBar.style.width = percentage + '%';
+
+    // 格式化显示为k
+    const displayTotal = (totalTokens / 1000).toFixed(1) + 'k';
+    const displayMax = (maxTokensLimit / 1000).toFixed(0) + 'k';
+    tokenValue.textContent = `${displayTotal} / ${displayMax} (${percentage.toFixed(1)}%)`;
+  }
 }
 
 // ════════════════════════════════════════
