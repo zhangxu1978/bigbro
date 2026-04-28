@@ -9,6 +9,7 @@ const API_BASE = '/api/lifesim';
 const DEFAULT_CONFIG = {
   apiUrl: 'http://localhost:3100/v1/chat/completions',
   model: 'moda-kimi2.5',
+  hostModel: '',
   apiKey: '',
   maxTokens: 2000
 };
@@ -20,29 +21,63 @@ async function loadModels() {
     const response = await fetch('/api/config');
     if (!response.ok) throw new Error('HTTP error! status: ' + response.status);
     const data = await response.json();
+
+    // 填充主模型下拉框
     const select = document.getElementById('cfg-model');
     select.innerHTML = '';
+
+    // 填充托管模型下拉框
+    const hostSelect = document.getElementById('cfg-host-model');
+    hostSelect.innerHTML = '';
+
     if (!data.models || data.models.length === 0) {
       const option = document.createElement('option');
       option.value = '';
       option.textContent = '暂无可用模型';
       select.appendChild(option);
+
+      const hostOption = document.createElement('option');
+      hostOption.value = '';
+      hostOption.textContent = '暂无可用模型';
+      hostSelect.appendChild(hostOption);
       return;
     }
+
+    // 添加"不使用托管"选项
+    const noHostOption = document.createElement('option');
+    noHostOption.value = '';
+    noHostOption.textContent = '不使用AI托管';
+    hostSelect.appendChild(noHostOption);
+
     data.models.forEach(model => {
+      // 主模型选项
       const option = document.createElement('option');
       option.value = model.id || 'unknown';
       option.textContent = `${model.name} (${model.provider})`;
       select.appendChild(option);
+
+      // 托管模型选项
+      const hostOption = document.createElement('option');
+      hostOption.value = model.id || 'unknown';
+      hostOption.textContent = `${model.name} (${model.provider})`;
+      hostSelect.appendChild(hostOption);
     });
   } catch (error) {
     console.error('加载模型列表失败:', error);
+
     const select = document.getElementById('cfg-model');
     select.innerHTML = '';
     const option = document.createElement('option');
     option.value = '';
     option.textContent = '加载模型失败';
     select.appendChild(option);
+
+    const hostSelect = document.getElementById('cfg-host-model');
+    hostSelect.innerHTML = '';
+    const hostOption = document.createElement('option');
+    hostOption.value = '';
+    hostOption.textContent = '加载模型失败';
+    hostSelect.appendChild(hostOption);
   }
 }
 
@@ -70,6 +105,7 @@ async function saveConfig() {
   const cfg = {
     apiUrl: apiUrl,
     model: document.getElementById('cfg-model').value || DEFAULT_CONFIG.model,
+    hostModel: document.getElementById('cfg-host-model').value || '',
     apiKey: document.getElementById('cfg-key').value || '',
     maxTokens: parseInt(document.getElementById('cfg-tokens').value) || DEFAULT_CONFIG.maxTokens,
   };
@@ -92,6 +128,8 @@ async function initConfigScreen() {
   await loadModels();
   const cfg = await loadConfig();
   document.getElementById('cfg-api-url').value = cfg.apiUrl;
+
+  // 设置主模型
   const modelSelect = document.getElementById('cfg-model');
   if (cfg.model) {
     const existingOption = Array.from(modelSelect.options).find(opt => opt.value === cfg.model);
@@ -103,6 +141,20 @@ async function initConfigScreen() {
     }
     modelSelect.value = cfg.model;
   }
+
+  // 设置托管模型
+  const hostModelSelect = document.getElementById('cfg-host-model');
+  if (cfg.hostModel) {
+    const existingHostOption = Array.from(hostModelSelect.options).find(opt => opt.value === cfg.hostModel);
+    if (!existingHostOption) {
+      const option = document.createElement('option');
+      option.value = cfg.hostModel;
+      option.textContent = cfg.hostModel;
+      hostModelSelect.insertBefore(option, hostModelSelect.firstChild);
+    }
+    hostModelSelect.value = cfg.hostModel;
+  }
+
   document.getElementById('cfg-key').value = cfg.apiKey;
   document.getElementById('cfg-tokens').value = cfg.maxTokens;
 }
@@ -287,6 +339,13 @@ async function renderWorldsGrid() {
 let gameState = {};
 let gameMessages = [];
 let isGenerating = false;
+
+// ════════════════════════════════════════
+//  AI托管状态
+// ════════════════════════════════════════
+let isGameHosting = false;
+let isCreatorHosting = false;
+let hostingController = null; // 用于中断托管
 
 // ════════════════════════════════════════
 //  对话式世界观创建器状态
@@ -795,6 +854,10 @@ function confirmExitCreator() {
 }
 
 function exitCreator() {
+  // 停止AI托管
+  if (isCreatorHosting) {
+    stopCreatorHosting();
+  }
   closeModal('exit-creator-modal');
   initWorldCreator();
   showScreen('worlds');
@@ -1276,6 +1339,11 @@ function applyAIResponse(parsed, isFirst) {
 //  死亡处理
 // ════════════════════════════════════════
 function handleDeath(parsed) {
+  // 游戏结束时停止AI托管
+  if (isGameHosting) {
+    stopGameHosting();
+  }
+
   const storyArea = document.getElementById('story-area');
   const deathMsg = document.createElement('div');
   deathMsg.className = 'msg msg-death';
@@ -1286,11 +1354,11 @@ function handleDeath(parsed) {
   `;
   storyArea.appendChild(deathMsg);
   scrollStoryToBottom();
-  
+
   // 清除选项
   document.getElementById('options-list').innerHTML = '';
   setInputDisabled(true);
-  
+
   // 显示游戏结束界面
   setTimeout(() => {
     gameState.isDead = true;
@@ -1436,6 +1504,10 @@ function confirmExit() {
 }
 
 function exitGame() {
+  // 停止AI托管
+  if (isGameHosting) {
+    stopGameHosting();
+  }
   closeModal('exit-modal');
   showScreen('menu');
 }
@@ -1510,6 +1582,286 @@ function initParticles() {
       animation-delay:${Math.random() * 10}s;
     `;
     container.appendChild(p);
+  }
+}
+
+// ════════════════════════════════════════
+//  AI托管核心功能
+// ════════════════════════════════════════
+
+// 调用托管模型做选择
+async function callHostingAI(context, options) {
+  const cfg = await loadConfig();
+  if (!cfg.hostModel) {
+    throw new Error('未设置托管模型，请在AI设置中配置');
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (cfg.apiKey) headers['Authorization'] = `Bearer ${cfg.apiKey}`;
+
+  const prompt = `你正在玩一个文字冒险游戏。根据以下情境，选择最合适的行动：
+
+当前情境：
+${context}
+
+可选行动：
+${options.map((opt, i) => `${i + 1}. ${opt}`).join('\n')}
+
+请只返回你选择的选项编号（1-${options.length}），不要有任何其他内容。`;
+
+  const resp = await fetch(cfg.apiUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      model: cfg.hostModel,
+      messages: [{ role: 'user', content: prompt }],
+      max_tokens: 50,
+      temperature: 0.7,
+      stream: false
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.text();
+    throw new Error(`托管AI调用失败 ${resp.status}: ${err}`);
+  }
+
+  const data = await resp.json();
+  const content = data.choices?.[0]?.message?.content || '';
+
+  // 提取数字
+  const match = content.match(/\d+/);
+  if (match) {
+    const choice = parseInt(match[0]);
+    if (choice >= 1 && choice <= options.length) {
+      return choice - 1; // 返回0-based索引
+    }
+  }
+
+  // 如果无法解析，随机选择
+  return Math.floor(Math.random() * options.length);
+}
+
+// ════════════════════════════════════════
+//  游戏AI托管
+// ════════════════════════════════════════
+async function toggleGameHosting() {
+  if (isGameHosting) {
+    stopGameHosting();
+    return;
+  }
+
+  const cfg = await loadConfig();
+  if (!cfg.hostModel) {
+    showToast('请先设置托管模型');
+    showScreen('config');
+    return;
+  }
+
+  if (gameState.isDead) {
+    showToast('游戏已结束，无法托管');
+    return;
+  }
+
+  isGameHosting = true;
+  const btn = document.getElementById('game-host-btn');
+  btn.classList.add('active');
+  btn.textContent = '⏹ 停止';
+
+  // 更新footer显示
+  const footerInfo = document.getElementById('footer-info');
+  footerInfo.innerHTML = 'AI托管中<span class="hosting-status"><span class="loading-dots"><span></span><span></span><span></span></span></span>';
+
+  showToast('AI托管已启动');
+
+  // 开始托管循环
+  runGameHostingLoop();
+}
+
+function stopGameHosting() {
+  isGameHosting = false;
+  const btn = document.getElementById('game-host-btn');
+  btn.classList.remove('active');
+  btn.textContent = '🤖 托管';
+
+  const footerInfo = document.getElementById('footer-info');
+  footerInfo.textContent = 'AI托管已停止';
+
+  if (hostingController) {
+    hostingController.abort();
+    hostingController = null;
+  }
+
+  showToast('AI托管已停止');
+}
+
+async function runGameHostingLoop() {
+  while (isGameHosting) {
+    try {
+      // 检查是否正在生成
+      if (isGenerating) {
+        await sleep(1000);
+        continue;
+      }
+
+      // 获取当前选项
+      const optBtns = document.querySelectorAll('.opt-btn');
+      if (optBtns.length === 0) {
+        await sleep(1000);
+        continue;
+      }
+
+      // 获取最近的叙事作为上下文
+      const lastNarrative = getLastNarrative();
+      const options = Array.from(optBtns).map(btn => {
+        const textSpan = btn.querySelector('.opt-text');
+        return textSpan ? textSpan.textContent : btn.textContent;
+      });
+
+      // 创建新的中止控制器
+      hostingController = new AbortController();
+
+      // 调用托管AI做选择
+      const choiceIndex = await callHostingAI(lastNarrative, options);
+
+      if (!isGameHosting) break;
+
+      // 点击选择的选项
+      if (optBtns[choiceIndex]) {
+        optBtns[choiceIndex].click();
+      }
+
+      // 等待一段时间再继续
+      await sleep(3000 + Math.random() * 2000); // 3-5秒随机间隔
+    } catch (err) {
+      console.error('托管出错:', err);
+      if (isGameHosting) {
+        showToast('托管出错: ' + err.message);
+        stopGameHosting();
+      }
+      break;
+    }
+  }
+}
+
+function getLastNarrative() {
+  const storyArea = document.getElementById('story-area');
+  const narratives = storyArea.querySelectorAll('.msg-narrator');
+  if (narratives.length > 0) {
+    return narratives[narratives.length - 1].textContent;
+  }
+  return '游戏刚开始';
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ════════════════════════════════════════
+//  世界构建AI托管
+// ════════════════════════════════════════
+async function toggleCreatorHosting() {
+  if (isCreatorHosting) {
+    stopCreatorHosting();
+    return;
+  }
+
+  const cfg = await loadConfig();
+  if (!cfg.hostModel) {
+    showToast('请先设置托管模型');
+    showScreen('config');
+    return;
+  }
+
+  if (isCreatorGenerating) {
+    showToast('请等待当前回复完成');
+    return;
+  }
+
+  isCreatorHosting = true;
+  const btn = document.getElementById('creator-host-btn');
+  btn.classList.add('active');
+  btn.textContent = '⏹ 停止托管';
+
+  showToast('AI托管已启动');
+
+  // 开始托管循环
+  runCreatorHostingLoop();
+}
+
+function stopCreatorHosting() {
+  isCreatorHosting = false;
+  const btn = document.getElementById('creator-host-btn');
+  btn.classList.remove('active');
+  btn.textContent = '🤖 AI托管';
+
+  if (hostingController) {
+    hostingController.abort();
+    hostingController = null;
+  }
+
+  showToast('AI托管已停止');
+}
+
+async function runCreatorHostingLoop() {
+  while (isCreatorHosting) {
+    try {
+      // 检查是否正在生成
+      if (isCreatorGenerating) {
+        await sleep(1000);
+        continue;
+      }
+
+      // 获取当前选项按钮
+      const optBtns = document.querySelectorAll('.creator-opt-btn');
+      if (optBtns.length === 0) {
+        // 检查是否已经完成世界构建
+        const startBtn = document.querySelector('.creator-start-btn');
+        if (startBtn) {
+          showToast('世界构建完成！');
+          stopCreatorHosting();
+          break;
+        }
+        await sleep(1000);
+        continue;
+      }
+
+      // 获取最近的对话作为上下文
+      const chat = document.getElementById('creator-chat');
+      const msgs = chat.querySelectorAll('.creator-msg');
+      let context = '开始创造新世界';
+      if (msgs.length > 0) {
+        const lastMsg = msgs[msgs.length - 1];
+        context = lastMsg.textContent || '继续对话';
+      }
+
+      const options = Array.from(optBtns).map(btn => btn.textContent.replace('✎', '').trim());
+
+      // 创建新的中止控制器
+      hostingController = new AbortController();
+
+      // 调用托管AI做选择
+      const choiceIndex = await callHostingAI(context, options);
+
+      if (!isCreatorHosting) break;
+
+      // 点击选择的选项
+      if (optBtns[choiceIndex]) {
+        optBtns[choiceIndex].click();
+      }
+
+      // 等待一段时间再继续
+      await sleep(3000 + Math.random() * 2000);
+    } catch (err) {
+      console.error('托管出错:', err);
+      if (isCreatorHosting) {
+        showToast('托管出错: ' + err.message);
+        stopCreatorHosting();
+      }
+      break;
+    }
   }
 }
 

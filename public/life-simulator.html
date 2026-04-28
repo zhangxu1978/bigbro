@@ -56,6 +56,9 @@
     <div class="worlds-header">
       <button class="back-btn" onclick="confirmExitCreator()">← 返回</button>
       <span class="worlds-title">🎨 共创世界</span>
+      <button class="ai-host-btn" id="creator-host-btn" onclick="toggleCreatorHosting()" title="AI自动托管">
+        🤖 AI托管
+      </button>
     </div>
     <div class="creator-area">
       <div class="creator-intro">
@@ -85,10 +88,17 @@
     <div class="config-group">
       <label class="config-label">API 地址</label>
       <input class="config-input" id="cfg-api-url" placeholder="http://localhost:3100/v1/chat/completions" />
-      <label class="config-label">模型</label>
+      <label class="config-label">主模型（用于游戏）</label>
       <select class="config-input" id="cfg-model">
         <option value="">加载中...</option>
       </select>
+      <label class="config-label">托管模型（用于AI托管）</label>
+      <select class="config-input" id="cfg-host-model">
+        <option value="">加载中...</option>
+      </select>
+      <div class="config-note" style="margin-bottom:12px">
+        AI托管时，系统会用此模型自动帮你做选择并推进游戏。
+      </div>
       <label class="config-label">API Key（可选）</label>
       <input class="config-input" id="cfg-key" type="password" placeholder="如果需要认证" />
       <label class="config-label">最大 Token 数</label>
@@ -128,6 +138,9 @@
         <span id="footer-world-type"></span>
       </div>
       <div class="footer-actions">
+        <button class="footer-btn host-btn" id="game-host-btn" onclick="toggleGameHosting()" title="AI自动托管">
+          🤖 托管
+        </button>
         <button class="footer-btn danger" onclick="confirmExitGame()">✕ 退出</button>
       </div>
     </div>

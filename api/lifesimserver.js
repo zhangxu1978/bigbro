@@ -31,6 +31,7 @@ function ensureConfigFile() {
         const defaultConfig = {
             apiUrl: 'http://localhost:3100/v1/chat/completions',
             model: 'moda-kimi2.5',
+            hostModel: '',
             apiKey: '',
             maxTokens: 2000
         };
@@ -57,10 +58,11 @@ router.get('/lifesim/config', (req, res) => {
 // 保存配置
 router.post('/lifesim/config', (req, res) => {
     try {
-        const { apiUrl, model, apiKey, maxTokens } = req.body;
+        const { apiUrl, model, hostModel, apiKey, maxTokens } = req.body;
         const config = {
             apiUrl: apiUrl || 'http://localhost:3100/v1/chat/completions',
             model: model || 'moda-kimi2.5',
+            hostModel: hostModel || '',
             apiKey: apiKey || '',
             maxTokens: parseInt(maxTokens) || 2000
         };
