@@ -229,11 +229,7 @@ async function saveCurrentGame() {
 }
 
 function confirmExitGame() {
-  if (confirm('确定要退出游戏吗？进度将会保存。')) {
-    saveCurrentGame();
-    // 可以在这里添加重定向或其他退出逻辑
-    window.location.href = 'index.html';
-  }
+  document.getElementById('exit-modal').classList.add('active');
 }
 
 async function deleteWorld(id, e) {
@@ -1440,7 +1436,6 @@ function confirmExit() {
 }
 
 function exitGame() {
-  saveCurrentGame();
   closeModal('exit-modal');
   showScreen('menu');
 }

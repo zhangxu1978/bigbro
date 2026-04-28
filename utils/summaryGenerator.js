@@ -35,7 +35,7 @@ async function generateSummary(gameState, messages) {
 
 最近对话：
 ${messagesText}
-
+不要用破坏游戏体验的总结，比如游戏结束，玩家失败，玩家面临三个选项等。
 请用简洁的语言描述当前进度，不超过50字。`;
 
         const headers = {
@@ -67,9 +67,9 @@ ${messagesText}
         let summary = data.choices?.[0]?.message?.content || '';
         summary = summary.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         
-        if (summary.length > 50) {
-            summary = summary.substring(0, 50).trim();
-        }
+        // if (summary.length > 50) {
+        //     summary = summary.substring(0, 50).trim();
+        // }
         
         return summary || null;
     } catch (err) {
