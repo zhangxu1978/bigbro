@@ -5,21 +5,12 @@ const fs = require('fs');
 const app = express();
 const port = 3033;
 
-// 导入路由模块
-const searchRouter = require('./api/searchserver');
-const assistantRouter = require('./api/assistantserver');
-const aiModelRouter = require('./api/aimodelserver');
-const lifeSimRouter = require('./api/lifesimserver');
+// 导入数据库模块
+const { initDatabase } = require('./utils/database');
 
 // 中间件配置
 app.use(bodyParser.json());
 app.use(express.static('public'));
-
-// 挂载路由
-app.use('/api', searchRouter);
-app.use('/api', assistantRouter);
-app.use('/api', aiModelRouter);
-app.use('/api', lifeSimRouter);
 
 // 确保data目录存在
 const dataDir = path.join(__dirname, 'data');
@@ -40,11 +31,25 @@ if (!fs.existsSync(dataFile)) {
     fs.writeFileSync(dataFile, JSON.stringify(initialData, null, 2));
 }
 
-// 导入节点管理路由模块
+// 导入路由模块
+const searchRouter = require('./api/searchserver');
+const assistantRouter = require('./api/assistantserver');
+const aiModelRouter = require('./api/aimodelserver');
+const lifeSimRouter = require('./api/lifesimserver');
 const nodeRouter = require('./api/nodeserver');
+const keywordRouter = require('./api/keywordserver');
+const plotRouter = require('./api/plotserver');
+const characterRouter = require('./api/characterserver');
 
-// 挂载节点管理路由
+// 挂载路由
+app.use('/api', searchRouter);
+app.use('/api', assistantRouter);
+app.use('/api', aiModelRouter);
+app.use('/api', lifeSimRouter);
 app.use('/api', nodeRouter);
+app.use('/api', keywordRouter);
+app.use('/api', plotRouter);
+app.use('/api', characterRouter);
 
 
 
@@ -210,24 +215,14 @@ app.post('/api/auto-generate-children', async (req, res) => {
 
 
 
-// 导入关键字管理路由模块
-const keywordRouter = require('./api/keywordserver');
-
-// 挂载关键字管理路由
-app.use('/api', keywordRouter);
-
-// 导入情节管理路由模块
-const plotRouter = require('./api/plotserver');
-
-// 挂载情节管理路由
-app.use('/api', plotRouter);
-
-// 导入人物卡管理路由模块
-const characterRouter = require('./api/characterserver');
-
-// 挂载人物卡管理路由
-app.use('/api', characterRouter);
-
-app.listen(port, () => {
-    console.log(`服务器运行在 http://localhost:${port}`);
-})
+// 初始化数据库后启动服务器
+initDatabase((err) => {
+    if (err) {
+        console.error('数据库初始化失败:', err.message);
+        process.exit(1);
+    }
+    
+    app.listen(port, () => {
+        console.log(`服务器运行在 http://localhost:${port}`);
+    });
+});

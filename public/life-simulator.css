@@ -547,6 +547,66 @@ body {
 .config-save-btn:hover { opacity: 0.9; }
 .config-note { font-size: 0.8rem; color: var(--text2); line-height: 1.6; }
 
+/* 存档选择模态框 */
+.saves-modal {
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+}
+.saves-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.saves-modal .close-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.saves-modal .close-btn:hover {
+  background: var(--bg3);
+  color: var(--text);
+}
+.saves-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.save-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.save-item:hover {
+  border-color: var(--accent);
+  background: var(--bg3);
+}
+.save-header {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.save-turn { color: var(--accent); font-weight: 600; }
+.save-age { color: var(--gold); }
+.save-date { color: var(--text2); margin-left: auto; }
+.save-summary {
+  font-size: 0.9rem;
+  color: var(--text2);
+  line-height: 1.5;
+}
+
 @media (max-width: 600px) {
   .logo { font-size: 2rem; }
   .stat-bar { display: none; }

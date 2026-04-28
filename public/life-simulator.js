@@ -121,6 +121,60 @@ async function getWorlds() {
   }
 }
 
+async function getSaves(worldId) {
+  try {
+    const resp = await fetch(`${API_BASE}/worlds/${worldId}/saves`);
+    if (!resp.ok) throw new Error('加载存档列表失败');
+    return await resp.json();
+  } catch (err) {
+    console.error('加载存档列表失败:', err);
+    return [];
+  }
+}
+
+async function loadSaveById(saveId) {
+  try {
+    const resp = await fetch(`${API_BASE}/saves/${saveId}`);
+    if (!resp.ok) throw new Error('加载存档失败');
+    const save = await resp.json();
+    await loadGameFromSave(save);
+    closeModal('saves-modal');
+  } catch (err) {
+    console.error('加载存档失败:', err);
+    showToast('加载存档失败: ' + err.message);
+  }
+}
+
+async function showSavesModal(worldId, worldName) {
+  const saves = await getSaves(worldId);
+  const modalTitle = document.querySelector('#saves-modal h2');
+  modalTitle.textContent = `选择存档 - ${worldName}`;
+  
+  const savesList = document.getElementById('saves-list');
+  
+  if (saves.length === 0) {
+    savesList.innerHTML = '<div style="text-align:center;color:var(--text2);padding:40px">暂无存档</div>';
+    document.getElementById('saves-modal').classList.add('active');
+    return;
+  }
+  
+  savesList.innerHTML = saves.map(save => {
+    const date = new Date(save.savedAt).toLocaleString('zh-CN');
+    return `
+      <div class="save-item" onclick="loadSaveById('${save.id}')">
+        <div class="save-header">
+          <span class="save-turn">回合 ${save.turn}</span>
+          <span class="save-age">${save.age}岁</span>
+          <span class="save-date">${date}</span>
+        </div>
+        <div class="save-summary">${save.summary || '暂无摘要'}</div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('saves-modal').classList.add('active');
+}
+
 async function getWorld(id) {
   try {
     const resp = await fetch(`${API_BASE}/worlds/${id}`);
@@ -157,24 +211,16 @@ async function saveWorld(worldData) {
 async function saveCurrentGame() {
   if (!gameState.worldId) return;
   try {
-    const worldData = {
-      id: gameState.worldId,
-      name: gameState.worldName,
-      desc: gameState.worldDesc,
-      type: gameState.worldType,
-      tags: gameState.worldTags || [],
-      storylines: gameState.storylines || { main: '', hidden: '', romance: '' },
-      importantCharacters: gameState.importantCharacters || { heroine: '', mentor: '', friend: '', enemy: '', rival: '' },
-      savedAt: Date.now(),
-      gameState: { ...gameState },
-      messages: [...gameMessages]
-    };
-    const resp = await fetch(`${API_BASE}/worlds`, {
+    const resp = await fetch(`${API_BASE}/save`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(worldData)
+      body: JSON.stringify({
+        gameState: { ...gameState },
+        messages: [...gameMessages]
+      })
     });
     if (!resp.ok) throw new Error('存档失败');
+    const result = await resp.json();
     showToast('存档成功');
   }
   catch (err) {
@@ -234,7 +280,7 @@ async function renderWorldsGrid() {
         <span class="wc-tag">回合 ${world.turn || 0}</span>
       </div>
     `;
-    card.onclick = () => loadGameById(world.id);
+    card.onclick = () => showSavesModal(world.id, world.name || '未知世界');
     grid.appendChild(card);
   });
 }
@@ -1083,6 +1129,63 @@ async function loadGame(world) {
   }
 
   gameMessages.push({ role: 'user', content: '（玩家重新进入游戏）请简短描述当前状态，并给出接下来的选项，继续冒险。' });
+
+  try {
+    const rawResp = await callAI(gameMessages);
+    gameMessages.push({ role: 'assistant', content: rawResp });
+    const parsed = parseAIResponse(rawResp);
+    applyAIResponse(parsed, false);
+  } catch (err) {
+    handleAIError(err);
+  }
+}
+
+// ════════════════════════════════════════
+//  从存档加载游戏（重新推演模式）
+// ════════════════════════════════════════
+async function loadGameFromSave(save) {
+  gameState = { ...save.gameState };
+  gameMessages = [...(save.messages || [])];
+
+  showScreen('game');
+  document.getElementById('game-world-name').textContent = gameState.worldName || '未知世界';
+  
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '';
+  const modeText = isThirdPerson ? '第三人称' : '第二人称';
+  const nameText = playerName ? ` · ${playerName}` : '';
+  document.getElementById('footer-world-type').textContent = `${gameState.worldName} · ${modeText}${nameText} · ${gameState.builder || ''}`;
+  document.getElementById('game-turn').textContent = gameState.turn || 0;
+  document.getElementById('stat-age').textContent = gameState.age || 0;
+
+  const storyArea = document.getElementById('story-area');
+  storyArea.innerHTML = '';
+
+  appendSystemMsg(`从存档继续冒险：${gameState.worldName}`);
+  appendSystemMsg(`当前进度：第 ${gameState.turn || 0} 回合，${gameState.age || 0} 岁`);
+
+  const narrativeMessages = gameMessages.filter(m => m.role === 'assistant');
+  const lastN = narrativeMessages.slice(-2);
+  lastN.forEach(m => {
+    try {
+      const parsed = parseAIResponse(m.content);
+      if (parsed.narrative) {
+        if (parsed.timeSkip) appendSystemMsg(parsed.timeSkip);
+        appendNarrative(parsed.narrative);
+      }
+    } catch (e) {}
+  });
+
+  appendSystemMsg('命运之书正在推演新的剧情走向...');
+  showLoadingInOptions();
+  setInputDisabled(true);
+
+  const systemPrompt = buildSystemPrompt(false);
+  if (gameMessages.length > 0 && gameMessages[0].role === 'system') {
+    gameMessages[0].content = systemPrompt;
+  }
+
+  gameMessages.push({ role: 'user', content: '（玩家从存档重新开始）请基于当前状态继续推演剧情，给出新的选项。' });
 
   try {
     const rawResp = await callAI(gameMessages);

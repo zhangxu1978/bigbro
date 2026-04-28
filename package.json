@@ -11,6 +11,7 @@
     "bigbro": "file:",
     "body-parser": "^1.20.2",
     "express": "^4.18.2",
-    "https-proxy-agent": "^7.0.6"
+    "https-proxy-agent": "^7.0.6",
+    "sqlite3": "^6.0.1"
   }
 }
