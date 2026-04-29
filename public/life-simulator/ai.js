@@ -161,68 +161,97 @@ function buildSystemPrompt(isNew) {
   }
 }
 
-function parseAIResponse(text) {
-  let jsonStr = text;
-  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) jsonStr = jsonMatch[1];
-  else {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start >= 0 && end > start) jsonStr = text.slice(start, end + 1);
-    else jsonStr = '';
+function extractJSON(text) {
+  if (!text || typeof text !== 'string') return null;
+  
+  text = text.trim();
+  
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (codeBlockMatch) {
+    text = codeBlockMatch[1];
   }
-
-  if (!jsonStr || jsonStr.trim() === '') {
-    return {
-      narrative: text,
-      age: window.LifeSimulator.gameState.age || 0,
-      timeSkip: '',
-      status: '',
-      options: [
-        { id: 1, text: '继续...' },
-        { id: 2, text: '思考当前处境' },
-        { id: 3, text: '探索周围环境' }
-      ],
-      isDead: false,
-      deathSummary: null
-    };
+  
+  let start = text.indexOf('{');
+  let end = text.lastIndexOf('}');
+  
+  if (start === -1 || end === -1 || start >= end) {
+    start = text.indexOf('[');
+    end = text.lastIndexOf(']');
+    if (start === -1 || end === -1 || start >= end) return null;
   }
-
+  
+  let jsonStr = text.slice(start, end + 1);
+  
   try {
     return JSON.parse(jsonStr);
   } catch (e) {
-    console.error('JSON 解析失败:', e, '\n原始文本:', text);
-    return {
-      narrative: text,
-      age: window.LifeSimulator.gameState.age || 0,
-      timeSkip: '',
-      status: '',
-      options: [
-        { id: 1, text: '继续...' },
-        { id: 2, text: '思考当前处境' },
-        { id: 3, text: '探索周围环境' }
-      ],
-      isDead: false,
-      deathSummary: null
-    };
+    const repaired = tryRepairJSON(jsonStr);
+    if (repaired) {
+      try {
+        return JSON.parse(repaired);
+      } catch (e2) {}
+    }
+    return null;
   }
 }
 
-function parseCreatorResponse(text) {
-  let jsonStr = text;
-  const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-  if (jsonMatch) jsonStr = jsonMatch[1];
-  else {
-    const start = text.indexOf('{');
-    const end = text.lastIndexOf('}');
-    if (start >= 0 && end > start) jsonStr = text.slice(start, end + 1);
+function tryRepairJSON(jsonStr) {
+  jsonStr = jsonStr.replace(/[\u0000-\u001F]+/g, ' ');
+  
+  let fixed = jsonStr;
+  let iterations = 0;
+  const maxIterations = 10;
+  
+  while (iterations < maxIterations) {
+    let before = fixed;
+    
+    fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+    fixed = fixed.replace(/([{[])\s*,/g, '$1');
+    
+    fixed = fixed.replace(/([{,]\s*)"(\w+)":/g, '$1"$2":');
+    
+    try {
+      JSON.parse(fixed);
+      return fixed;
+    } catch (e) {}
+    
+    if (before === fixed) break;
+    iterations++;
+  }
+  
+  return null;
+}
+
+function parseAIResponse(text) {
+  const jsonData = extractJSON(text);
+  
+  if (jsonData) {
+    return jsonData;
   }
 
-  try {
-    return JSON.parse(jsonStr);
-  } catch (e) {
-    return { narrative: text, options: null };
+  return {
+    narrative: text,
+    age: window.LifeSimulator.gameState.age || 0,
+    timeSkip: '',
+    status: '',
+    options: [
+      { id: 1, text: '继续...' },
+      { id: 2, text: '思考当前处境' },
+      { id: 3, text: '探索周围环境' }
+    ],
+    isDead: false,
+    deathSummary: null
+  };
+}
+
+function parseCreatorResponse(text) {
+  const jsonData = extractJSON(text);
+  
+  if (jsonData) {
+    return jsonData;
   }
+  
+  return { narrative: text, options: null };
 }
 
 const WORLD_CREATOR_PROMPT = `你是一个富有想象力的"世界守护者"，你的任务是与其他玩家对话，共同创造一个独特的文字冒险游戏世界。
@@ -400,6 +429,8 @@ window.LifeSimulator.updateTokenDisplay = updateTokenDisplay;
 window.LifeSimulator.buildSystemPrompt = buildSystemPrompt;
 window.LifeSimulator.parseAIResponse = parseAIResponse;
 window.LifeSimulator.parseCreatorResponse = parseCreatorResponse;
+window.LifeSimulator.extractJSON = extractJSON;
+window.LifeSimulator.tryRepairJSON = tryRepairJSON;
 window.LifeSimulator.WORLD_CREATOR_PROMPT = WORLD_CREATOR_PROMPT;
 window.LifeSimulator.PLOT_WEAVER_PROMPT = PLOT_WEAVER_PROMPT;
 window.LifeSimulator.CHARACTER_WEAVER_PROMPT = CHARACTER_WEAVER_PROMPT;

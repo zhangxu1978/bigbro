@@ -79,25 +79,13 @@ async function generateNextStep() {
         const rawResp = await window.LifeSimulator.callAI(plotWeaverMessages);
         plotWeaverMessages.push({ role: 'assistant', content: rawResp });
 
-        const jsonMatch = rawResp.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        let parsed;
-        if (jsonMatch) {
-            parsed = JSON.parse(jsonMatch[1]);
-        } else {
-            const start = rawResp.indexOf('{');
-            const end = rawResp.lastIndexOf('}');
-            if (start >= 0 && end > start) {
-                parsed = JSON.parse(rawResp.slice(start, end + 1));
-            } else {
-                parsed = {
-                    step: plotSteps.length + 1,
-                    purpose: '',
-                    obstacle: '',
-                    achievement: '',
-                    narrative: rawResp
-                };
-            }
-        }
+        const parsed = window.LifeSimulator.extractJSON(rawResp) || {
+            step: plotSteps.length + 1,
+            purpose: '',
+            obstacle: '',
+            achievement: '',
+            narrative: rawResp
+        };
 
         parsed.step = plotSteps.length + 1;
         plotSteps.push(parsed);
@@ -195,19 +183,7 @@ async function generateCharacter() {
     const resp = await window.LifeSimulator.callAI(characterWeaverMessages);
     characterWeaverMessages.push({ role: 'assistant', content: resp });
 
-    const jsonMatch = resp.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    let parsed;
-    if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[1]);
-    } else {
-        const start = resp.indexOf('{');
-        const end = resp.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-            parsed = JSON.parse(resp.slice(start, end + 1));
-        } else {
-            parsed = {};
-        }
-    }
+    const parsed = window.LifeSimulator.extractJSON(resp) || {};
 
     document.getElementById('char-name').value = parsed.name || '';
     document.getElementById('char-desire').value = parsed.desire || '';
@@ -235,19 +211,7 @@ async function regenerateCharacter() {
     const resp = await window.LifeSimulator.callAI(characterWeaverMessages);
     characterWeaverMessages.push({ role: 'assistant', content: resp });
 
-    const jsonMatch = resp.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    let parsed;
-    if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[1]);
-    } else {
-        const start = resp.indexOf('{');
-        const end = resp.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-            parsed = JSON.parse(resp.slice(start, end + 1));
-        } else {
-            parsed = {};
-        }
-    }
+    const parsed = window.LifeSimulator.extractJSON(resp) || {};
 
     if (!currentName && parsed.name) {
         document.getElementById('char-name').value = parsed.name;
