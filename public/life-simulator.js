@@ -296,17 +296,133 @@ async function deleteWorld(id, e) {
   }
 }
 
+async function showExportModal() {
+  const worlds = await getWorldsCache();
+  const list = document.getElementById('export-worlds-list');
+  if (!worlds || worlds.length === 0) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text2);padding:40px">暂无世界可导出</div>';
+  } else {
+    list.innerHTML = worlds.map(world => `
+      <div class="save-item" onclick="exportWorldAsMd('${world.id}')" style="cursor:pointer">
+        <div class="save-header">
+          <span class="save-name">${world.name || '未知世界'}</span>
+          <span class="save-date">${new Date(world.savedAt).toLocaleDateString('zh-CN')}</span>
+        </div>
+        <div class="save-summary">${world.desc || '暂无描述'}</div>
+      </div>
+    `).join('');
+  }
+  document.getElementById('export-modal').classList.add('active');
+}
+
+let cachedWorldsForExport = [];
+
+async function getWorldsCache() {
+  if (cachedWorldsForExport.length === 0) {
+    cachedWorldsForExport = await getWorlds();
+  }
+  return cachedWorldsForExport;
+}
+
+async function exportWorldAsMd(worldId) {
+  const world = await getWorld(worldId);
+  if (!world) {
+    showToast('获取世界信息失败');
+    return;
+  }
+  const saves = await getSaves(worldId);
+  let gameState = {};
+  let turn = world.turn || 0;
+  let savedAt = world.savedAt || Date.now();
+  if (saves && saves.length > 0) {
+    const latestSave = saves[0];
+    gameState = latestSave.gameState || {};
+    turn = latestSave.turn || turn;
+    savedAt = latestSave.savedAt || savedAt;
+  }
+  world.turn = turn;
+  world.savedAt = savedAt;
+  const md = generateWorldMarkdown(world, gameState);
+  downloadMarkdown(md, world.name || '未知世界');
+  closeModal('export-modal');
+}
+
+function generateWorldMarkdown(world, gameState) {
+  const isThirdPerson = gameState.narrativeMode === 'third_person';
+  const playerName = gameState.playerName || '';
+  const modeText = isThirdPerson ? '第三人称' : '第二人称';
+  const nameText = playerName ? ` · ${playerName}` : '';
+  const tags = (world.tags || []).join('、');
+  const storylines = world.storylines || {};
+  const importantChars = world.importantCharacters || {};
+  return `# ${world.name || '未知世界'}
+
+> ${world.desc || '暂无描述'}
+
+## 基本信息
+
+- **世界类型**: ${world.type || '未知'}
+- **标签**: ${tags || '无'}
+- **叙事模式**: ${modeText}${nameText}
+- **回合**: ${world.turn || 0}
+- **存档时间**: ${new Date(world.savedAt).toLocaleString('zh-CN')}
+
+## 世界设定
+
+${gameState.atmosphere ? `- **世界氛围**: ${gameState.atmosphere}` : ''}
+${gameState.powerSystem ? `- **力量体系**: ${gameState.powerSystem}` : ''}
+${gameState.societyStructure ? `- **社会结构**: ${gameState.societyStructure}` : ''}
+${gameState.specialElement ? `- **特殊元素**: ${gameState.specialElement}` : ''}
+
+## 故事线
+
+${storylines.main ? `- **明线**: ${storylines.main}` : ''}
+${storylines.hidden ? `- **暗线**: ${storylines.hidden}` : ''}
+${storylines.romance ? `- **感情线**: ${storylines.romance}` : ''}
+
+## 重要角色
+
+${importantChars.heroine ? `- **女主**: ${importantChars.heroine}` : ''}
+${importantChars.mentor ? `- **良师**: ${importantChars.mentor}` : ''}
+${importantChars.friend ? `- **益友**: ${importantChars.friend}` : ''}
+${importantChars.enemy ? `- **仇敌**: ${importantChars.enemy}` : ''}
+${importantChars.rival ? `- **对手**: ${importantChars.rival}` : ''}
+
+## 玩家出身
+
+${gameState.playerBackground || '未知'}
+
+---
+*由人生模拟器生成*
+`;
+}
+
+function downloadMarkdown(content, filename) {
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}_世界观.md`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 async function renderWorldsGrid() {
   const worlds = await getWorlds();
+  cachedWorldsForExport = worlds;
   const grid = document.getElementById('worlds-grid');
+  const exportBtn = document.getElementById('export-world-btn');
   grid.innerHTML = '';
 
-  // 已有世界存档
   if (worlds.length === 0) {
     grid.innerHTML = '<div style="color:var(--text2);font-size:0.88rem;text-align:center;padding:40px 20px">暂无存档，开始新冒险吧！</div>';
+    exportBtn.style.display = 'none';
     return;
   }
 
+  exportBtn.style.display = 'block';
   worlds.forEach(world => {
     const card = document.createElement('div');
     card.className = 'world-card';

@@ -33,6 +33,7 @@
     <div class="worlds-header">
       <button class="back-btn" onclick="showScreen('menu')">← 返回</button>
       <span class="worlds-title">选择世界</span>
+      <button class="back-btn" id="export-world-btn" onclick="showExportModal()" style="display:none">📤 导出</button>
     </div>
     <div class="worlds-actions" id="worlds-actions">
       <div class="worlds-action-btn primary" onclick="showScreen('world-creator')">
@@ -227,6 +228,31 @@
   </div>
 </div>
 
-<script src="life-simulator.js"></script>
+<!-- 导出世界模态框 -->
+<div class="modal-overlay" id="export-modal">
+  <div class="modal saves-modal">
+    <div class="modal-header">
+      <h2>导出世界观</h2>
+      <button class="close-btn" onclick="closeModal('export-modal')">✕</button>
+    </div>
+    <div class="saves-list" id="export-worlds-list">
+      <!-- 世界列表 -->
+    </div>
+    <div class="modal-btns">
+      <button class="menu-btn" onclick="closeModal('export-modal')">取消</button>
+    </div>
+  </div>
+</div>
+
+<script src="life-simulator/config.js"></script>
+<script src="life-simulator/state.js"></script>
+<script src="life-simulator/ai.js"></script>
+<script src="life-simulator/storage.js"></script>
+<script src="life-simulator/world-creator.js"></script>
+<script src="life-simulator/game.js"></script>
+<script src="life-simulator/ui.js"></script>
+<script src="life-simulator/hosting.js"></script>
+<script src="life-simulator/utils.js"></script>
+<script src="life-simulator/main.js"></script>
 </body>
 </html>
