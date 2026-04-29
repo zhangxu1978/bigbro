@@ -178,7 +178,7 @@ async function submitGameInput() {
   await selectOption(text);
 }
 
-function applyAIResponse(parsed, isFirst) {
+async function applyAIResponse(parsed, isFirst) {
   window.LifeSimulator.isGenerating = false;
 
   if (isFirst && parsed.worldName) {
@@ -189,6 +189,8 @@ function applyAIResponse(parsed, isFirst) {
     document.getElementById('footer-world-type').textContent = `${parsed.worldName} · 冒险中`;
   }
 
+  const previousAge = window.LifeSimulator.gameState.age || 0;
+  
   if (parsed.age !== undefined) {
     window.LifeSimulator.gameState.age = parsed.age;
     document.getElementById('stat-age').textContent = parsed.age;
@@ -202,6 +204,11 @@ function applyAIResponse(parsed, isFirst) {
   if (parsed.isDead) {
     handleDeath(parsed);
     return;
+  }
+
+  const currentAge = window.LifeSimulator.gameState.age || 0;
+  if (currentAge > previousAge) {
+    await checkPlotTrigger(previousAge, currentAge);
   }
 
   window.LifeSimulator.renderOptions(parsed.options || []);
@@ -287,6 +294,64 @@ function handleAIError(err) {
   ]);
 }
 
+async function checkPlotTrigger(fromAge, toAge) {
+    const worldId = window.LifeSimulator.gameState.worldId;
+    if (!worldId) return;
+
+    for (let age = fromAge + 1; age <= toAge; age++) {
+        try {
+            const resp = await fetch(`${window.LifeSimulator.API_BASE}/plot-by-age/${worldId}/${age}`);
+            if (!resp.ok) continue;
+            
+            const plot = await resp.json();
+            if (plot && !window.LifeSimulator.gameState.activePlot) {
+                await triggerPlot(plot);
+                return;
+            }
+        } catch (err) {
+            console.error('检查剧情触发失败:', err);
+        }
+    }
+}
+
+async function triggerPlot(plot) {
+    window.LifeSimulator.gameState.activePlot = plot.id;
+    
+    window.LifeSimulator.appendSystemMsg('📖 命运之书翻开了新的篇章...');
+    
+    const narrative = `【${plot.name}】\n${plot.description || ''}`;
+    window.LifeSimulator.appendNarrative(narrative);
+    
+    const steps = await fetch(`${window.LifeSimulator.API_BASE}/plot-steps/${plot.id}`);
+    const stepsData = await steps.json();
+    
+    if (stepsData && stepsData.length > 0) {
+        const firstStep = stepsData[0];
+        window.LifeSimulator.appendNarrative(`**目的**：${firstStep.purpose}\n**阻碍**：${firstStep.obstacle}\n**达成**：${firstStep.achievement}`);
+        if (firstStep.narrative) {
+            window.LifeSimulator.appendNarrative(firstStep.narrative);
+        }
+    }
+    
+    const characters = await fetch(`${window.LifeSimulator.API_BASE}/plot-characters/${plot.id}`);
+    const charactersData = await characters.json();
+    
+    if (charactersData && charactersData.length > 0) {
+        window.LifeSimulator.appendSystemMsg('👥 登场角色：');
+        charactersData.forEach(char => {
+            window.LifeSimulator.appendNarrative(`- ${char.name}（${char.role}）`);
+        });
+    }
+    
+    window.LifeSimulator.renderOptions([
+        { id: 1, text: '遵循命运的指引...' },
+        { id: 2, text: '尝试反抗命运...' },
+        { id: 3, text: '静观其变...' }
+    ]);
+    
+    window.LifeSimulator.setInputDisabled(false);
+}
+
 window.LifeSimulator = window.LifeSimulator || {};
 window.LifeSimulator.startNewGame = startNewGame;
 window.LifeSimulator.loadGameById = loadGameById;
@@ -300,3 +365,5 @@ window.LifeSimulator.showGameOver = showGameOver;
 window.LifeSimulator.exitGame = exitGame;
 window.LifeSimulator.restartGame = restartGame;
 window.LifeSimulator.handleAIError = handleAIError;
+window.LifeSimulator.checkPlotTrigger = checkPlotTrigger;
+window.LifeSimulator.triggerPlot = triggerPlot;

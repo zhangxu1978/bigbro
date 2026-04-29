@@ -40,6 +40,7 @@ const nodeRouter = require('./api/nodeserver');
 const keywordRouter = require('./api/keywordserver');
 const plotRouter = require('./api/plotserver');
 const characterRouter = require('./api/characterserver');
+const plotDriverRouter = require('./api/plotdriver');
 
 // 挂载路由
 app.use('/api', searchRouter);
@@ -50,6 +51,7 @@ app.use('/api', nodeRouter);
 app.use('/api', keywordRouter);
 app.use('/api', plotRouter);
 app.use('/api', characterRouter);
+app.use('/api', plotDriverRouter);
 
 
 

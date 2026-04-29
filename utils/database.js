@@ -56,6 +56,77 @@ function createTables(callback) {
         )
     `;
 
+    const createPlotsTable = `
+        CREATE TABLE IF NOT EXISTS plots (
+            id TEXT PRIMARY KEY,
+            worldId TEXT NOT NULL,
+            name TEXT NOT NULL,
+            description TEXT,
+            startAge INTEGER NOT NULL,
+            endAge INTEGER NOT NULL,
+            target TEXT,
+            obstacle TEXT,
+            achievement TEXT,
+            reward TEXT,
+            suspense TEXT,
+            status TEXT DEFAULT 'draft',
+            createdAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            updatedAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (worldId) REFERENCES worlds(id) ON DELETE CASCADE
+        )
+    `;
+
+    const createWorldCharactersTable = `
+        CREATE TABLE IF NOT EXISTS world_characters (
+            id TEXT PRIMARY KEY,
+            worldId TEXT NOT NULL,
+            name TEXT NOT NULL,
+            role TEXT,
+            desire TEXT,
+            stance TEXT,
+            flaw TEXT,
+            relationships TEXT,
+            description TEXT,
+            createdAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            updatedAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (worldId) REFERENCES worlds(id) ON DELETE CASCADE
+        )
+    `;
+
+    const createPlotCharactersTable = `
+        CREATE TABLE IF NOT EXISTS plot_characters (
+            id TEXT PRIMARY KEY,
+            plotId TEXT NOT NULL,
+            worldCharacterId TEXT,
+            name TEXT NOT NULL,
+            role TEXT,
+            desire TEXT,
+            stance TEXT,
+            flaw TEXT,
+            relationships TEXT,
+            description TEXT,
+            scope TEXT DEFAULT 'plot_only',
+            createdAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (plotId) REFERENCES plots(id) ON DELETE CASCADE,
+            FOREIGN KEY (worldCharacterId) REFERENCES world_characters(id) ON DELETE SET NULL
+        )
+    `;
+
+    const createPlotStepsTable = `
+        CREATE TABLE IF NOT EXISTS plot_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            plotId TEXT NOT NULL,
+            stepNumber INTEGER NOT NULL,
+            purpose TEXT NOT NULL,
+            obstacle TEXT NOT NULL,
+            achievement TEXT NOT NULL,
+            narrative TEXT,
+            status TEXT DEFAULT 'pending',
+            createdAt INTEGER DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (plotId) REFERENCES plots(id) ON DELETE CASCADE
+        )
+    `;
+
     db.serialize(() => {
         db.run(createWorldsTable, (err) => {
             if (err) {
@@ -75,8 +146,36 @@ function createTables(callback) {
                         callback(err);
                         return;
                     }
-                    console.log('所有表创建成功');
-                    callback(null);
+                    db.run(createPlotsTable, (err) => {
+                        if (err) {
+                            console.error('创建 plots 表失败:', err.message);
+                            callback(err);
+                            return;
+                        }
+                        db.run(createWorldCharactersTable, (err) => {
+                            if (err) {
+                                console.error('创建 world_characters 表失败:', err.message);
+                                callback(err);
+                                return;
+                            }
+                            db.run(createPlotCharactersTable, (err) => {
+                                if (err) {
+                                    console.error('创建 plot_characters 表失败:', err.message);
+                                    callback(err);
+                                    return;
+                                }
+                                db.run(createPlotStepsTable, (err) => {
+                                    if (err) {
+                                        console.error('创建 plot_steps 表失败:', err.message);
+                                        callback(err);
+                                        return;
+                                    }
+                                    console.log('所有表创建成功');
+                                    callback(null);
+                                });
+                            });
+                        });
+                    });
                 });
             });
         });

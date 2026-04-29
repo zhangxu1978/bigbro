@@ -166,6 +166,84 @@
     </div>
   </div>
 
+  <!-- ── 剧情推演界面 ── -->
+  <div id="screen-plot-driver" class="screen">
+    <div class="worlds-header">
+      <button class="back-btn" onclick="showScreen('worlds')">← 返回</button>
+      <span class="worlds-title">📜 剧情推演</span>
+      <button class="back-btn" id="plot-save-btn" onclick="saveCurrentPlot()" style="display:none">💾 保存</button>
+    </div>
+    
+    <!-- 剧情设置面板 -->
+    <div class="plot-setup-panel" id="plot-setup-panel">
+      <h3>🎬 剧情设置</h3>
+      <div class="plot-form">
+        <div class="form-row">
+          <label>剧情名称</label>
+          <input type="text" id="plot-name" placeholder="输入剧情名称" />
+        </div>
+        <div class="form-row">
+          <label>主角年龄</label>
+          <input type="number" id="plot-start-age" placeholder="开始年龄" min="1" max="100" />
+        </div>
+        <div class="form-row">
+          <label>结束年龄</label>
+          <input type="number" id="plot-end-age" placeholder="结束年龄" min="1" max="150" />
+        </div>
+        <div class="form-row">
+          <label>场景地点</label>
+          <input type="text" id="plot-location" placeholder="如：迷雾森林深处" />
+        </div>
+        <div class="form-row">
+          <label>目标</label>
+          <input type="text" id="plot-target" placeholder="主角的目标" />
+        </div>
+        <div class="form-row">
+          <label>阻碍</label>
+          <input type="text" id="plot-obstacle" placeholder="主要阻碍" />
+        </div>
+        <div class="form-row">
+          <label>达成</label>
+          <input type="text" id="plot-achievement" placeholder="预期达成" />
+        </div>
+        <div class="form-row">
+          <label>收获</label>
+          <input type="text" id="plot-reward" placeholder="完成后的收获" />
+        </div>
+        <div class="form-row">
+          <label>悬念</label>
+          <input type="text" id="plot-suspense" placeholder="留下的悬念" />
+        </div>
+        <button class="plot-start-btn" onclick="startPlotWeaving()">✨ 开始推演</button>
+      </div>
+    </div>
+    
+    <!-- 分屏区域 -->
+    <div class="plot-split-container" id="plot-split-container" style="display:none">
+      <!-- 左侧：剧情推演 -->
+      <div class="plot-left-panel">
+        <div class="panel-header">
+          <h3>📖 剧情推演</h3>
+          <button class="small-btn" onclick="generateNextStep()">→ 推演下一步</button>
+        </div>
+        <div class="plot-steps-area" id="plot-steps-area">
+          <!-- 剧情步骤列表 -->
+        </div>
+      </div>
+      
+      <!-- 右侧：角色生成 -->
+      <div class="plot-right-panel">
+        <div class="panel-header">
+          <h3>👥 角色管理</h3>
+          <button class="small-btn" onclick="showCharacterCreator()">+ 新建角色</button>
+        </div>
+        <div class="characters-list" id="characters-list">
+          <!-- 角色列表 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <!-- 模态框 -->
@@ -244,6 +322,77 @@
   </div>
 </div>
 
+<!-- 角色创建模态框 -->
+<div class="modal-overlay" id="character-creator-modal">
+  <div class="modal character-creator-modal">
+    <div class="modal-header">
+      <h2>🎭 创建角色</h2>
+      <button class="close-btn" onclick="closeModal('character-creator-modal')">✕</button>
+    </div>
+    <div class="character-form">
+      <div class="form-row">
+        <label>角色名称</label>
+        <input type="text" id="char-name" placeholder="输入角色名称" />
+      </div>
+      <div class="form-row">
+        <label>角色定位</label>
+        <input type="text" id="char-role" placeholder="如：强大敌人、秘密商会会长" />
+      </div>
+      <div class="form-row">
+        <label>欲望</label>
+        <input type="text" id="char-desire" placeholder="角色最核心的渴望" />
+      </div>
+      <div class="form-row">
+        <label>立场</label>
+        <input type="text" id="char-stance" placeholder="价值观和立场" />
+      </div>
+      <div class="form-row">
+        <label>缺陷</label>
+        <input type="text" id="char-flaw" placeholder="性格弱点" />
+      </div>
+      <div class="form-row">
+        <label>关系</label>
+        <textarea id="char-relationships" placeholder="JSON格式，如：{\"主角\": \"宿敌\"}" rows="3"></textarea>
+      </div>
+      <div class="form-row">
+        <label>描述</label>
+        <input type="text" id="char-description" placeholder="角色一句话描述" />
+      </div>
+      <div class="form-row">
+        <label>生效范围</label>
+        <select id="char-scope">
+          <option value="plot_only">本剧情内生效</option>
+          <option value="persistent">一直生效</option>
+        </select>
+      </div>
+      <div class="character-actions">
+        <button class="small-btn" onclick="generateCharacter()">🎲 AI生成</button>
+        <button class="small-btn" onclick="regenerateCharacter()">🔄 重新生成</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="menu-btn" onclick="closeModal('character-creator-modal')">取消</button>
+      <button class="menu-btn primary" onclick="saveCharacter()">保存角色</button>
+    </div>
+  </div>
+</div>
+
+<!-- 世界选择模态框（选择世界进行剧情推演） -->
+<div class="modal-overlay" id="world-select-modal">
+  <div class="modal saves-modal">
+    <div class="modal-header">
+      <h2>选择世界</h2>
+      <button class="close-btn" onclick="closeModal('world-select-modal')">✕</button>
+    </div>
+    <div class="saves-list" id="world-select-list">
+      <!-- 世界列表 -->
+    </div>
+    <div class="modal-btns">
+      <button class="menu-btn" onclick="closeModal('world-select-modal')">取消</button>
+    </div>
+  </div>
+</div>
+
 <script src="life-simulator/config.js"></script>
 <script src="life-simulator/state.js"></script>
 <script src="life-simulator/ai.js"></script>
@@ -253,6 +402,7 @@
 <script src="life-simulator/ui.js"></script>
 <script src="life-simulator/hosting.js"></script>
 <script src="life-simulator/utils.js"></script>
+<script src="life-simulator/plot-driver.js"></script>
 <script src="life-simulator/main.js"></script>
 </body>
 </html>

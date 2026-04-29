@@ -1,0 +1,19 @@
+- [x] Checkpoint 1: 数据库表创建完成（plots, world_characters, plot_characters, plot_steps）
+- [x] Checkpoint 2: 双角色表外键关系正确（plot_characters关联world_characters）
+- [x] Checkpoint 3: 后端API开发完成并通过测试（含角色流转API、年龄校验）
+- [x] Checkpoint 4: 剧情推演设置界面实现完成
+- [x] Checkpoint 5: 分屏显示功能正常工作
+- [x] Checkpoint 7: 角色生成工具实现完成（AI生成、手动编辑、重新生成、从世界角色选择）
+- [x] Checkpoint 8: 角色属性包含生效范围选项（本剧情内生效/一直生效）
+- [x] Checkpoint 9: 世界选择界面增加剧情推演按钮
+- [x] Checkpoint 10: 世界角色可进入剧情成为剧情内角色
+- [x] Checkpoint 11: 剧情结束时角色带出逻辑正确（根据生效范围判定）
+- [x] Checkpoint 12: 同一世界多剧情年龄校验功能正常
+- [x] Checkpoint 13: 剧情保存功能实现完成
+- [x] Checkpoint 14: 命运之书自动触发机制实现完成
+- [x] Checkpoint 15: 前端路由与界面切换正常
+- [x] Checkpoint 16: 剧情输出符合（目的、阻碍、达成）格式
+- [x] Checkpoint 17: 角色属性（欲望、立场、缺陷、关系、生效范围）生成正常
+- [x] Checkpoint 18: 剧情数据与世界、角色正确关联
+- [x] Checkpoint 19: 所有功能端到端测试通过
+- [x] Checkpoint 20: 不影响现有自由冒险模式

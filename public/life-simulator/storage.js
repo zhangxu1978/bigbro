@@ -278,14 +278,47 @@ async function renderWorldsGrid() {
         <span class="wc-tag">回合 ${world.turn || 0}</span>
       </div>
     `;
-    card.onclick = () => window.LifeSimulator.showSavesModal(world.id, world.name || '未知世界');
+    card.onclick = () => window.LifeSimulator.showWorldActionModal(world);
     grid.appendChild(card);
   });
+}
+
+function showWorldActionModal(world) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay active';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 400px;">
+      <h2 style="color: var(--accent2);">选择操作</h2>
+      <p style="color: var(--text2); margin-bottom: 20px;">世界：${world.name || '未知世界'}</p>
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+        <button class="menu-btn primary" onclick="window.LifeSimulator.selectWorldAction('play', '${world.id}', '${world.name || '未知世界'}')">
+          ▶ 开始冒险
+        </button>
+        <button class="menu-btn" onclick="window.LifeSimulator.selectWorldAction('plot', '${world.id}', '${world.name || '未知世界'}')">
+          📜 推演剧情
+        </button>
+      </div>
+      <button class="menu-btn" onclick="this.parentElement.parentElement.remove()">取消</button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function selectWorldAction(action, worldId, worldName) {
+  document.querySelector('.modal-overlay.active')?.remove();
+  
+  if (action === 'play') {
+    window.LifeSimulator.showSavesModal(worldId, worldName);
+  } else if (action === 'plot') {
+    window.LifeSimulator.showPlotDriver(worldId);
+  }
 }
 
 window.LifeSimulator = window.LifeSimulator || {};
 window.LifeSimulator.getWorlds = getWorlds;
 window.LifeSimulator.getSaves = getSaves;
+window.LifeSimulator.showWorldActionModal = showWorldActionModal;
+window.LifeSimulator.selectWorldAction = selectWorldAction;
 window.LifeSimulator.loadSaveById = loadSaveById;
 window.LifeSimulator.showSavesModal = showSavesModal;
 window.LifeSimulator.getWorld = getWorld;
