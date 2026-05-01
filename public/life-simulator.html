@@ -370,40 +370,46 @@
       <button class="close-btn" onclick="closeModal('character-creator-modal')">✕</button>
     </div>
     <div class="character-form">
-      <div class="form-row">
-        <label>角色名称</label>
-        <input type="text" id="char-name" placeholder="输入角色名称" />
+      <div class="form-row-double">
+        <div class="form-row">
+          <label>角色名称</label>
+          <input type="text" id="char-name" placeholder="输入角色名称" />
+        </div>
+        <div class="form-row">
+          <label>角色定位</label>
+          <input type="text" id="char-role" placeholder="如：强大敌人、秘密商会会长" />
+        </div>
       </div>
-      <div class="form-row">
-        <label>角色定位</label>
-        <input type="text" id="char-role" placeholder="如：强大敌人、秘密商会会长" />
+      <div class="form-row-double">
+        <div class="form-row">
+          <label>欲望</label>
+          <input type="text" id="char-desire" placeholder="角色最核心的渴望" />
+        </div>
+        <div class="form-row">
+          <label>立场</label>
+          <input type="text" id="char-stance" placeholder="价值观和立场" />
+        </div>
       </div>
-      <div class="form-row">
-        <label>欲望</label>
-        <input type="text" id="char-desire" placeholder="角色最核心的渴望" />
-      </div>
-      <div class="form-row">
-        <label>立场</label>
-        <input type="text" id="char-stance" placeholder="价值观和立场" />
-      </div>
-      <div class="form-row">
-        <label>缺陷</label>
-        <input type="text" id="char-flaw" placeholder="性格弱点" />
+      <div class="form-row-double">
+        <div class="form-row">
+          <label>缺陷</label>
+          <input type="text" id="char-flaw" placeholder="性格弱点" />
+        </div>
+        <div class="form-row">
+          <label>生效范围</label>
+          <select id="char-scope">
+            <option value="plot_only">本剧情内生效</option>
+            <option value="persistent">一直生效</option>
+          </select>
+        </div>
       </div>
       <div class="form-row">
         <label>关系</label>
-        <textarea id="char-relationships" placeholder="JSON格式，如：{\"主角\": \"宿敌\"}" rows="3"></textarea>
+        <textarea id="char-relationships" placeholder="JSON格式，如：{\"主角\": \"宿敌\"}" rows="4"></textarea>
       </div>
       <div class="form-row">
         <label>描述</label>
-        <input type="text" id="char-description" placeholder="角色一句话描述" />
-      </div>
-      <div class="form-row">
-        <label>生效范围</label>
-        <select id="char-scope">
-          <option value="plot_only">本剧情内生效</option>
-          <option value="persistent">一直生效</option>
-        </select>
+        <textarea id="char-description" placeholder="角色一句话描述" rows="3"></textarea>
       </div>
       <div class="character-actions">
         <button class="small-btn" onclick="generateCharacter()">🎲 AI生成</button>
