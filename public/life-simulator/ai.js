@@ -197,29 +197,83 @@ function extractJSON(text) {
 
 function tryRepairJSON(jsonStr) {
   jsonStr = jsonStr.replace(/[\u0000-\u001F]+/g, ' ');
-  
+
   let fixed = jsonStr;
   let iterations = 0;
   const maxIterations = 10;
-  
+
   while (iterations < maxIterations) {
     let before = fixed;
-    
+
     fixed = fixed.replace(/,\s*([}\]])/g, '$1');
     fixed = fixed.replace(/([{[])\s*,/g, '$1');
-    
+
     fixed = fixed.replace(/([{,]\s*)"(\w+)":/g, '$1"$2":');
-    
+
     try {
       JSON.parse(fixed);
       return fixed;
     } catch (e) {}
-    
+
+    fixed = tryFixUnescapedQuotes(fixed);
+
+    try {
+      JSON.parse(fixed);
+      return fixed;
+    } catch (e) {}
+
     if (before === fixed) break;
     iterations++;
   }
-  
+
   return null;
+}
+
+function tryFixUnescapedQuotes(jsonStr) {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (let i = 0; i < jsonStr.length; i++) {
+    const char = jsonStr[i];
+
+    if (escaped) {
+      result += char;
+      escaped = false;
+      continue;
+    }
+
+    if (char === '\\') {
+      result += char;
+      escaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      if (!inString) {
+        inString = true;
+        result += char;
+      } else {
+        const nextNonSpace = jsonStr.slice(i + 1).match(/^\s*(.)/);
+        const nextChar = nextNonSpace ? nextNonSpace[1] : '';
+        if (nextChar === ',' || nextChar === '}' || nextChar === ']' || nextChar === '') {
+          inString = false;
+          result += char;
+        } else {
+          const prevChar = result[result.length - 1];
+          if (prevChar === '\\') {
+            result += char;
+          } else {
+            result += '\\"';
+          }
+        }
+      }
+    } else {
+      result += char;
+    }
+  }
+
+  return result;
 }
 
 function parseAIResponse(text) {
