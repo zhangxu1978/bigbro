@@ -111,23 +111,25 @@ function buildWorldContext(world) {
 
     const gs = world.gameState || {};
     const context = [];
-    context.push(`**世界名称**：${gs.worldName || '未知'}`);
-    context.push(`**世界类型**：${gs.worldType || '未知'}`);
-    if (gs.worldDesc) context.push(`**世界描述**：${gs.worldDesc}`);
+    context.push(`**世界名称**：${gs.worldName || world.name || '未知'}`);
+    context.push(`**世界类型**：${gs.worldType || world.type || '未知'}`);
+    if (gs.worldDesc || world.desc) context.push(`**世界描述**：${gs.worldDesc || world.desc}`);
     if (gs.atmosphere) context.push(`**世界氛围**：${gs.atmosphere}`);
     if (gs.powerSystem) context.push(`**力量体系**：${gs.powerSystem}`);
     if (gs.societyStructure) context.push(`**社会结构**：${gs.societyStructure}`);
-    if (gs.storylines) {
-        if (gs.storylines.main) context.push(`**明线故事**：${gs.storylines.main}`);
-        if (gs.storylines.hidden) context.push(`**暗线故事**：${gs.storylines.hidden}`);
-        if (gs.storylines.romance) context.push(`**感情线**：${gs.storylines.romance}`);
+    if (gs.storylines || world.storylines) {
+        const sl = gs.storylines || world.storylines;
+        if (sl.main) context.push(`**明线故事**：${sl.main}`);
+        if (sl.hidden) context.push(`**暗线故事**：${sl.hidden}`);
+        if (sl.romance) context.push(`**感情线**：${sl.romance}`);
     }
-    if (gs.importantCharacters) {
+    if (gs.importantCharacters || world.importantCharacters) {
+        const ic = gs.importantCharacters || world.importantCharacters;
         const chars = [];
-        if (gs.importantCharacters.heroine) chars.push(`女主：${gs.importantCharacters.heroine}`);
-        if (gs.importantCharacters.mentor) chars.push(`良师：${gs.importantCharacters.mentor}`);
-        if (gs.importantCharacters.friend) chars.push(`益友：${gs.importantCharacters.friend}`);
-        if (gs.importantCharacters.enemy) chars.push(`仇敌：${gs.importantCharacters.enemy}`);
+        if (ic.heroine) chars.push(`女主：${ic.heroine}`);
+        if (ic.mentor) chars.push(`良师：${ic.mentor}`);
+        if (ic.friend) chars.push(`益友：${ic.friend}`);
+        if (ic.enemy) chars.push(`仇敌：${ic.enemy}`);
         if (chars.length > 0) context.push(`**重要角色**：\n${chars.join('\n')}`);
     }
 
