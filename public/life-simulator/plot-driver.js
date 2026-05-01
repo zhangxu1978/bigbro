@@ -827,39 +827,94 @@ async function saveCharacter() {
         }
     }
 
-    const character = {
-        id: `char_${Date.now()}`,
-        plotId: currentPlot.id,
-        name,
-        role,
-        desire,
-        stance,
-        flaw,
-        relationships,
-        description,
-        scope
-    };
+    const editingIndex = window.LifeSimulator.currentEditingCharIndex;
+    const existingIndex = plotCharacters.findIndex(c => c.name === name && c.role === role && c.id !== (editingIndex !== undefined ? plotCharacters[editingIndex]?.id : null));
 
-    plotCharacters.push(character);
+    let character;
+    let isNew = false;
+
+    if (existingIndex !== -1) {
+        character = {
+            ...plotCharacters[existingIndex],
+            desire,
+            stance,
+            flaw,
+            relationships,
+            description,
+            scope
+        };
+        plotCharacters[existingIndex] = character;
+    } else if (editingIndex !== undefined && editingIndex !== null) {
+        character = {
+            ...plotCharacters[editingIndex],
+            name,
+            role,
+            desire,
+            stance,
+            flaw,
+            relationships,
+            description,
+            scope
+        };
+        plotCharacters[editingIndex] = character;
+    } else {
+        character = {
+            id: `char_${Date.now()}`,
+            plotId: currentPlot.id,
+            name,
+            role,
+            desire,
+            stance,
+            flaw,
+            relationships,
+            description,
+            scope
+        };
+        plotCharacters.push(character);
+        isNew = true;
+    }
+
     renderCharacters();
     window.LifeSimulator.closeModal('character-creator-modal');
+    window.LifeSimulator.currentEditingCharIndex = null;
+
+    const modal = document.getElementById('character-creator-modal');
+    const titleEl = modal.querySelector('.modal-title') || modal.querySelector('h2');
+    if (titleEl) titleEl.textContent = '创建角色';
 
     if (currentPlot && currentPlot.id) {
         try {
-            await fetch(`${window.LifeSimulator.API_BASE}/plot-characters`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    plotId: currentPlot.id,
-                    name: character.name,
-                    role: character.role,
-                    description: character.description,
-                    desire: character.desire,
-                    stance: character.stance,
-                    flaw: character.flaw,
-                    relationships: character.relationships
-                })
-            });
+            if (character.dbId) {
+                await fetch(`${window.LifeSimulator.API_BASE}/plot-characters/${character.dbId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plotId: currentPlot.id,
+                        name: character.name,
+                        role: character.role,
+                        description: character.description,
+                        desire: character.desire,
+                        stance: character.stance,
+                        flaw: character.flaw,
+                        relationships: character.relationships
+                    })
+                });
+            } else if (isNew) {
+                await fetch(`${window.LifeSimulator.API_BASE}/plot-characters`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        plotId: currentPlot.id,
+                        name: character.name,
+                        role: character.role,
+                        description: character.description,
+                        desire: character.desire,
+                        stance: character.stance,
+                        flaw: character.flaw,
+                        relationships: character.relationships
+                    })
+                });
+            }
         } catch (err) {
             console.error('保存角色失败：', err);
         }
@@ -875,7 +930,7 @@ function renderCharacters() {
         return;
     }
 
-    plotCharacters.forEach((char) => {
+    plotCharacters.forEach((char, index) => {
         const card = document.createElement('div');
         card.className = 'character-card';
         card.innerHTML = `
@@ -886,9 +941,48 @@ function renderCharacters() {
             ${char.flaw ? `<div class="character-attr"><span class="character-attr-label">缺陷</span><span class="character-attr-value">${char.flaw}</span></div>` : ''}
             ${char.description ? `<div class="character-attr"><span class="character-attr-label">描述</span><span class="character-attr-value">${char.description}</span></div>` : ''}
             <span class="character-scope">${char.scope === 'persistent' ? '一直生效' : '本剧情内生效'}</span>
+            <div class="character-actions">
+                <button class="char-action-btn" onclick="editCharacter(${index})">编辑</button>
+                <button class="char-action-btn" onclick="removeCharacter(${index})">删除</button>
+            </div>
         `;
         list.appendChild(card);
     });
+}
+
+function editCharacter(index) {
+    const char = plotCharacters[index];
+    if (!char) return;
+
+    document.getElementById('char-name').value = char.name || '';
+    document.getElementById('char-role').value = char.role || '';
+    document.getElementById('char-desire').value = char.desire || '';
+    document.getElementById('char-stance').value = char.stance || '';
+    document.getElementById('char-flaw').value = char.flaw || '';
+    document.getElementById('char-relationships').value = char.relationships ? JSON.stringify(char.relationships, null, 2) : '';
+    document.getElementById('char-description').value = char.description || '';
+    document.getElementById('char-scope').value = char.scope || 'plot_only';
+
+    window.LifeSimulator.currentEditingCharIndex = index;
+
+    const modal = document.getElementById('character-creator-modal');
+    const titleEl = modal.querySelector('.modal-title') || modal.querySelector('h2');
+    if (titleEl) titleEl.textContent = '编辑角色';
+    modal.classList.add('active');
+}
+
+function removeCharacter(index) {
+    if (!confirm('确定要删除这个角色吗？')) return;
+
+    const char = plotCharacters[index];
+    plotCharacters.splice(index, 1);
+    renderCharacters();
+
+    if (char.dbId) {
+        fetch(`${window.LifeSimulator.API_BASE}/plot-characters/${char.dbId}`, {
+            method: 'DELETE'
+        }).catch(err => console.error('删除角色失败：', err));
+    }
 }
 
 async function saveCurrentPlot() {
