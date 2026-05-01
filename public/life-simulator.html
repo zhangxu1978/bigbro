@@ -264,7 +264,7 @@
       <div class="plot-left-panel">
         <div class="panel-header">
           <h3>📖 剧情推演</h3>
-          <button class="small-btn" onclick="generateNextStep()">→ 推演下一步</button>
+          <button class="small-btn" onclick="showStepCreator()">→ 推演下一步</button>
         </div>
         <div class="plot-steps-area" id="plot-steps-area">
           <!-- 剧情步骤列表 -->
@@ -419,6 +419,56 @@
     <div class="modal-btns">
       <button class="menu-btn" onclick="closeModal('character-creator-modal')">取消</button>
       <button class="menu-btn primary" onclick="saveCharacter()">保存角色</button>
+    </div>
+  </div>
+</div>
+
+<!-- 剧情步骤创建模态框 -->
+<div class="modal-overlay" id="step-creator-modal">
+  <div class="modal step-creator-modal">
+    <div class="modal-header">
+      <h2>🎭 创建剧情步骤</h2>
+      <button class="close-btn" onclick="closeModal('step-creator-modal')">✕</button>
+    </div>
+    <div class="step-form">
+      <div class="form-row">
+        <label>剧情设计目的 <span style="color:var(--error)">*</span></label>
+        <input type="text" id="step-purpose" placeholder="这一步想要达成什么叙事效果" />
+      </div>
+      <div class="form-row">
+        <label>调动观众情绪 <span style="color:var(--error)">*</span></label>
+        <input type="text" id="step-emotion" placeholder="如：紧张、期待、感动、惊讶、悲伤、愤怒" />
+      </div>
+      <div class="form-row">
+        <label>涉及角色 <span style="color:var(--error)">*</span></label>
+        <input type="text" id="step-characters" placeholder="用逗号分隔多个角色，如：主角,师父,反派" />
+      </div>
+      <div class="form-row">
+        <label>剧情简述 <span style="color:var(--error)">*</span></label>
+        <input type="text" id="step-summary" placeholder="用一句话概括这一步的剧情" />
+      </div>
+      <div class="form-row-double">
+        <div class="form-row">
+          <label>阻碍</label>
+          <input type="text" id="step-obstacle" placeholder="主角面临的主要阻碍（可选）" />
+        </div>
+        <div class="form-row">
+          <label>达成</label>
+          <input type="text" id="step-achievement" placeholder="完成后达成什么成果（可选）" />
+        </div>
+      </div>
+      <div class="form-row">
+        <label>剧情描述</label>
+        <textarea id="step-narrative" placeholder="详细描述这一步发生了什么事（可选）" rows="4"></textarea>
+      </div>
+      <div class="step-actions">
+        <button class="small-btn" onclick="generateStep()">🎲 AI生成</button>
+        <button class="small-btn" onclick="regenerateStep()">🔄 重新生成</button>
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="menu-btn" onclick="closeModal('step-creator-modal')">取消</button>
+      <button class="menu-btn primary" onclick="saveStep()">保存步骤</button>
     </div>
   </div>
 </div>

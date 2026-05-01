@@ -1217,6 +1217,25 @@ body {
   border-color: var(--accent);
 }
 
+/* 剧情步骤创建模态框 */
+.step-creator-modal {
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.step-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.step-actions {
+  display: flex;
+  gap: 10px;
+}
+
 @media (max-width: 768px) {
   .plot-split-container {
     grid-template-columns: 1fr;

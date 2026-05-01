@@ -566,16 +566,19 @@ function getPlotCharacters(plotId) {
 function createPlotStep(stepData) {
     return new Promise((resolve, reject) => {
         const db = getDb();
-        const { plotId, stepNumber, purpose, obstacle, achievement, narrative, status } = stepData;
-        
+        const { plotId, stepNumber, purpose, emotion, characters, summary, obstacle, achievement, narrative, status } = stepData;
+
         db.run(
-            'INSERT INTO plot_steps (plotId, stepNumber, purpose, obstacle, achievement, narrative, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            'INSERT INTO plot_steps (plotId, stepNumber, purpose, emotion, characters, summary, obstacle, achievement, narrative, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [
                 plotId,
                 stepNumber,
-                purpose,
-                obstacle,
-                achievement,
+                purpose || '',
+                emotion || '',
+                characters || '[]',
+                summary || '',
+                obstacle || '',
+                achievement || '',
                 narrative || '',
                 status || 'pending',
                 Date.now()
@@ -603,6 +606,9 @@ function getPlotSteps(plotId) {
                     plotId: row.plotId,
                     stepNumber: row.stepNumber,
                     purpose: row.purpose,
+                    emotion: row.emotion,
+                    characters: row.characters ? JSON.parse(row.characters) : [],
+                    summary: row.summary,
                     obstacle: row.obstacle,
                     achievement: row.achievement,
                     narrative: row.narrative,
@@ -618,14 +624,17 @@ function getPlotSteps(plotId) {
 function updatePlotStep(stepId, stepData) {
     return new Promise((resolve, reject) => {
         const db = getDb();
-        const { purpose, obstacle, achievement, narrative, status } = stepData;
-        
+        const { purpose, emotion, characters, summary, obstacle, achievement, narrative, status } = stepData;
+
         db.run(
-            'UPDATE plot_steps SET purpose = ?, obstacle = ?, achievement = ?, narrative = ?, status = ? WHERE id = ?',
+            'UPDATE plot_steps SET purpose = ?, emotion = ?, characters = ?, summary = ?, obstacle = ?, achievement = ?, narrative = ?, status = ? WHERE id = ?',
             [
-                purpose,
-                obstacle,
-                achievement,
+                purpose || '',
+                emotion || '',
+                characters || '[]',
+                summary || '',
+                obstacle || '',
+                achievement || '',
                 narrative || '',
                 status || 'pending',
                 stepId

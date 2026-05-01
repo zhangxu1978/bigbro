@@ -67,6 +67,55 @@ const PLOT_DESIGNER_PROMPT = `你是一个富有创意的"剧情编织者"，你
 
 记住：你是在帮助玩家"编织"剧情，尊重玩家的想法，用问题引导但不主导，让故事属于玩家。`;
 
+const FATE_WEAVER_PROMPT = `你是一个经验丰富的"命运织机"，你的任务是根据已有的剧情规划，推演剧情的下一步发展。
+
+## 你的角色
+- 你深刻理解当前世界观的设定和规则
+- 你了解当前剧情的整体规划和目标
+- 你能够根据已规划的剧情步骤，自然地推演下一步发展
+- 你擅长制造悬念、推动冲突、揭示真相
+- 你善于调动观众的各种情绪：期待、紧张、感动、惊讶等
+
+## 当前剧情信息
+你将获得以下信息：
+1. 世界设定（世界名称、类型、氛围、力量体系、社会结构、重要角色等）
+2. 剧情规划（剧情名称、年龄范围、场景、目标、阻碍、预期达成、奖励、悬念）
+3. 已有的剧情步骤（每一步的设计目的、涉及角色、剧情简述等）
+4. 上一步剧情内容（如果有的话）
+
+## 推演要求
+根据以上信息，推演下一步剧情。每一步必须包含：
+- **purpose（剧情设计目的）**：这一步想要达成什么叙事效果
+- **emotion（调动情绪）**：这一步想要调动观众什么情绪（如：紧张、期待、感动、惊讶、悲伤、愤怒等）
+- **characters（涉及角色）**：这一步涉及哪些角色（角色名称列表）
+- **summary（剧情简述）**：用一句话概括这一步的剧情
+- **obstacle（阻碍）**：主角面临的主要阻碍（可选）
+- **achievement（达成）**：这一步完成后达成什么成果（可选）
+- **narrative（剧情描述）**：这一步的具体剧情内容，详细描述发生了什么事（可选）
+
+## 回复格式（严格遵守）——必须是合法 JSON：
+\`\`\`json
+{
+  "purpose": "剧情设计目的",
+  "emotion": "调动的情绪",
+  "characters": ["角色A", "角色B"],
+  "summary": "剧情简述",
+  "obstacle": "主要阻碍（可选）",
+  "achievement": "达成成果（可选）",
+  "narrative": "详细剧情描述（可选）"
+}
+\`\`\`
+
+## 重要规则
+- 不要重复已有步骤的内容，要推动剧情向前发展
+- 确保新步骤与整体剧情规划一致
+- 涉及的角色的行为要符合其人设
+- 每次只推演一步，不要一次性推演多步
+- 如果是第一步，需要引入主要角色，建立故事背景`;
+
+let fateWeaverMessages = [];
+let currentEditingStepIndex = null;
+
 function initPlotWeaver() {
     plotWeaverMessages = [];
     isPlotWeaverGenerating = false;
@@ -455,9 +504,12 @@ async function continuePlot(plotId) {
             plotSteps = steps.map((s, i) => ({
                 step: i + 1,
                 purpose: s.purpose || '',
+                emotion: s.emotion || '',
+                characters: s.characters || [],
+                summary: s.summary || '',
                 obstacle: s.obstacle || '',
                 achievement: s.achievement || '',
-                narrative: s.content || ''
+                narrative: s.narrative || s.content || ''
             }));
         } else {
             plotSteps = [];
@@ -574,6 +626,278 @@ function startPlotWeaving() {
     generateNextStep();
 }
 
+function buildPlotContextForStep() {
+    if (!currentPlot) return '暂无剧情设定';
+
+    const context = [];
+    context.push(`**剧情名称**：${currentPlot.name || '未命名剧情'}`);
+    if (currentPlot.startAge && currentPlot.endAge) {
+        context.push(`**年龄范围**：${currentPlot.startAge} - ${currentPlot.endAge}`);
+    }
+    if (currentPlot.location) context.push(`**场景**：${currentPlot.location}`);
+    if (currentPlot.target) context.push(`**目标**：${currentPlot.target}`);
+    if (currentPlot.obstacle) context.push(`**阻碍**：${currentPlot.obstacle}`);
+    if (currentPlot.achievement) context.push(`**达成**：${currentPlot.achievement}`);
+    if (currentPlot.reward) context.push(`**奖励**：${currentPlot.reward}`);
+    if (currentPlot.suspense) context.push(`**悬念**：${currentPlot.suspense}`);
+
+    if (plotSteps && plotSteps.length > 0) {
+        context.push(`**已规划的剧情步骤**：`);
+        plotSteps.forEach((s, i) => {
+            context.push(`  第${i + 1}步：${s.summary || s.purpose || '（无简述）'}`);
+            if (s.characters && s.characters.length > 0) {
+                context.push(`    涉及角色：${s.characters.join(', ')}`);
+            }
+        });
+    }
+
+    if (plotCharacters && plotCharacters.length > 0) {
+        context.push(`**已有角色**：`);
+        plotCharacters.forEach(char => {
+            context.push(`  - ${char.name}（${char.role}）`);
+        });
+    }
+
+    return context.join('\n');
+}
+
+function showStepCreator(editIndex = null) {
+    currentEditingStepIndex = editIndex;
+
+    document.getElementById('step-purpose').value = '';
+    document.getElementById('step-emotion').value = '';
+    document.getElementById('step-characters').value = '';
+    document.getElementById('step-summary').value = '';
+    document.getElementById('step-obstacle').value = '';
+    document.getElementById('step-achievement').value = '';
+    document.getElementById('step-narrative').value = '';
+
+    if (editIndex !== null && editIndex >= 0 && editIndex < plotSteps.length) {
+        const step = plotSteps[editIndex];
+        document.getElementById('step-purpose').value = step.purpose || '';
+        document.getElementById('step-emotion').value = step.emotion || '';
+        document.getElementById('step-characters').value = step.characters ? step.characters.join(', ') : '';
+        document.getElementById('step-summary').value = step.summary || '';
+        document.getElementById('step-obstacle').value = step.obstacle || '';
+        document.getElementById('step-achievement').value = step.achievement || '';
+        document.getElementById('step-narrative').value = step.narrative || '';
+
+        const modal = document.getElementById('step-creator-modal');
+        const titleEl = modal.querySelector('.modal-header h2');
+        if (titleEl) titleEl.textContent = '🎭 编辑剧情步骤';
+    } else {
+        const modal = document.getElementById('step-creator-modal');
+        const titleEl = modal.querySelector('.modal-header h2');
+        if (titleEl) titleEl.textContent = '🎭 创建剧情步骤';
+    }
+
+    document.getElementById('step-creator-modal').classList.add('active');
+}
+
+async function generateStep() {
+    const world = await getWorld(currentWorldId);
+    const worldContext = buildWorldContext(world);
+    const plotContext = buildPlotContextForStep();
+
+    const systemWithContext = FATE_WEAVER_PROMPT + '\n\n## 当前世界设定\n' + worldContext + '\n\n## 当前剧情规划\n' + plotContext;
+
+    const lastStep = plotSteps.length > 0 ? plotSteps[plotSteps.length - 1] : null;
+    const continuePrompt = lastStep
+        ? `当前是第${plotSteps.length + 1}步的推演。上一步剧情是：${lastStep.narrative || lastStep.summary}。请推演下一步。`
+        : `当前是第${plotSteps.length + 1}步的推演。剧情"${currentPlot?.name}"刚刚开始，请推演第一步。`;
+
+    fateWeaverMessages = [
+        { role: 'system', content: systemWithContext },
+        { role: 'user', content: continuePrompt }
+    ];
+
+    const loadingText = document.createElement('div');
+    loadingText.style.textAlign = 'center';
+    loadingText.style.padding = '16px';
+    loadingText.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div> 命运织机正在推演...';
+
+    const form = document.querySelector('.step-form');
+    form.appendChild(loadingText);
+
+    try {
+        const rawResp = await window.LifeSimulator.callAI(fateWeaverMessages);
+        fateWeaverMessages.push({ role: 'assistant', content: rawResp });
+
+        const parsed = window.LifeSimulator.extractJSON(rawResp);
+
+        if (parsed) {
+            document.getElementById('step-purpose').value = parsed.purpose || '';
+            document.getElementById('step-emotion').value = parsed.emotion || '';
+            document.getElementById('step-characters').value = Array.isArray(parsed.characters) ? parsed.characters.join(', ') : (parsed.characters || '');
+            document.getElementById('step-summary').value = parsed.summary || '';
+            document.getElementById('step-obstacle').value = parsed.obstacle || '';
+            document.getElementById('step-achievement').value = parsed.achievement || '';
+            document.getElementById('step-narrative').value = parsed.narrative || '';
+        }
+    } catch (err) {
+        alert('生成失败：' + err.message);
+    }
+
+    loadingText.remove();
+}
+
+async function regenerateStep() {
+    const currentPurpose = document.getElementById('step-purpose').value.trim();
+    const currentEmotion = document.getElementById('step-emotion').value.trim();
+    const currentCharacters = document.getElementById('step-characters').value.trim();
+    const currentSummary = document.getElementById('step-summary').value.trim();
+    const currentObstacle = document.getElementById('step-obstacle').value.trim();
+    const currentAchievement = document.getElementById('step-achievement').value.trim();
+    const currentNarrative = document.getElementById('step-narrative').value.trim();
+
+    const filledFields = [];
+    const emptyFields = [];
+
+    if (currentPurpose) filledFields.push(`设计目的：${currentPurpose}`);
+    else emptyFields.push('设计目的');
+
+    if (currentEmotion) filledFields.push(`调动情绪：${currentEmotion}`);
+    else emptyFields.push('调动情绪');
+
+    if (currentCharacters) filledFields.push(`涉及角色：${currentCharacters}`);
+    else emptyFields.push('涉及角色');
+
+    if (currentSummary) filledFields.push(`剧情简述：${currentSummary}`);
+    else emptyFields.push('剧情简述');
+
+    if (currentObstacle) filledFields.push(`阻碍：${currentObstacle}`);
+    else emptyFields.push('阻碍');
+
+    if (currentAchievement) filledFields.push(`达成：${currentAchievement}`);
+    else emptyFields.push('达成');
+
+    if (currentNarrative) filledFields.push(`剧情描述：${currentNarrative}`);
+    else emptyFields.push('剧情描述');
+
+    const world = await getWorld(currentWorldId);
+    const worldContext = buildWorldContext(world);
+    const plotContext = buildPlotContextForStep();
+
+    const systemWithContext = FATE_WEAVER_PROMPT + '\n\n## 当前世界设定\n' + worldContext + '\n\n## 当前剧情规划\n' + plotContext;
+
+    const lastStep = plotSteps.length > 0 ? plotSteps[plotSteps.length - 1] : null;
+    const continuePrompt = `请重新生成第${plotSteps.length + 1}步的剧情。
+【重要】用户已填写的字段请勿修改，直接保留：
+${filledFields.map(f => `  - ${f}`).join('\n')}
+【重要】请只生成以下未填写的字段：
+${emptyFields.map(f => `  - ${f}`).join('\n')}`;
+
+    fateWeaverMessages.push({ role: 'system', content: systemWithContext });
+    fateWeaverMessages.push({ role: 'user', content: continuePrompt });
+
+    const loadingText = document.createElement('div');
+    loadingText.style.textAlign = 'center';
+    loadingText.style.padding = '16px';
+    loadingText.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div> 命运织机正在重构...';
+
+    const form = document.querySelector('.step-form');
+    form.appendChild(loadingText);
+
+    try {
+        const rawResp = await window.LifeSimulator.callAI(fateWeaverMessages);
+        fateWeaverMessages.push({ role: 'assistant', content: rawResp });
+
+        const parsed = window.LifeSimulator.extractJSON(rawResp);
+
+        if (parsed) {
+            if (!currentPurpose && parsed.purpose) document.getElementById('step-purpose').value = parsed.purpose;
+            if (!currentEmotion && parsed.emotion) document.getElementById('step-emotion').value = parsed.emotion;
+            if (!currentCharacters && parsed.characters) {
+                document.getElementById('step-characters').value = Array.isArray(parsed.characters) ? parsed.characters.join(', ') : parsed.characters;
+            }
+            if (!currentSummary && parsed.summary) document.getElementById('step-summary').value = parsed.summary;
+            if (!currentObstacle && parsed.obstacle) document.getElementById('step-obstacle').value = parsed.obstacle;
+            if (!currentAchievement && parsed.achievement) document.getElementById('step-achievement').value = parsed.achievement;
+            if (!currentNarrative && parsed.narrative) document.getElementById('step-narrative').value = parsed.narrative;
+        }
+    } catch (err) {
+        alert('重新生成失败：' + err.message);
+    }
+
+    loadingText.remove();
+}
+
+async function saveStep() {
+    const purpose = document.getElementById('step-purpose').value.trim();
+    const emotion = document.getElementById('step-emotion').value.trim();
+    const charactersStr = document.getElementById('step-characters').value.trim();
+    const summary = document.getElementById('step-summary').value.trim();
+    const obstacle = document.getElementById('step-obstacle').value.trim();
+    const achievement = document.getElementById('step-achievement').value.trim();
+    const narrative = document.getElementById('step-narrative').value.trim();
+
+    if (!purpose) {
+        alert('请填写剧情设计目的');
+        return;
+    }
+    if (!emotion) {
+        alert('请填写调动观众情绪');
+        return;
+    }
+    if (!charactersStr) {
+        alert('请填写涉及角色');
+        return;
+    }
+    if (!summary) {
+        alert('请填写剧情简述');
+        return;
+    }
+
+    const characters = charactersStr.split(',').map(c => c.trim()).filter(c => c);
+
+    const stepData = {
+        purpose,
+        emotion,
+        characters,
+        summary,
+        obstacle,
+        achievement,
+        narrative
+    };
+
+    if (currentEditingStepIndex !== null && currentEditingStepIndex >= 0) {
+        plotSteps[currentEditingStepIndex] = {
+            ...plotSteps[currentEditingStepIndex],
+            ...stepData
+        };
+    } else {
+        stepData.step = plotSteps.length + 1;
+        plotSteps.push(stepData);
+    }
+
+    renderPlotSteps();
+    window.LifeSimulator.closeModal('step-creator-modal');
+    currentEditingStepIndex = null;
+
+    if (currentPlot && currentPlot.id) {
+        try {
+            await fetch(`${window.LifeSimulator.API_BASE}/plot-steps`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    plotId: currentPlot.id,
+                    stepNumber: stepData.step,
+                    purpose: stepData.purpose,
+                    emotion: stepData.emotion,
+                    characters: JSON.stringify(stepData.characters),
+                    summary: stepData.summary,
+                    obstacle: stepData.obstacle || '',
+                    achievement: stepData.achievement || '',
+                    narrative: stepData.narrative || '',
+                    status: 'pending'
+                })
+            });
+        } catch (err) {
+            console.error('保存步骤失败：', err);
+        }
+    }
+}
+
 async function generateNextStep() {
     const stepsArea = document.getElementById('plot-steps-area');
     const loading = document.createElement('div');
@@ -635,11 +959,14 @@ function renderPlotSteps() {
     plotSteps.forEach((step, index) => {
         const stepDiv = document.createElement('div');
         stepDiv.className = 'plot-step';
+        const charactersDisplay = step.characters && step.characters.length > 0
+            ? step.characters.join(', ')
+            : '-';
         stepDiv.innerHTML = `
             <div class="plot-step-header">
                 <span class="step-number">第 ${step.step} 步</span>
                 <div class="step-actions">
-                    <button class="step-action-btn" onclick="editStep(${index})" title="编辑">✎</button>
+                    <button class="step-action-btn" onclick="showStepCreator(${index})" title="编辑">✎</button>
                     <button class="step-action-btn" onclick="removeStep(${index})" title="删除">✕</button>
                 </div>
             </div>
@@ -647,6 +974,18 @@ function renderPlotSteps() {
                 <div class="step-item">
                     <span class="step-label">目的</span>
                     <span class="step-value">${step.purpose || '-'}</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-label">情绪</span>
+                    <span class="step-value">${step.emotion || '-'}</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-label">角色</span>
+                    <span class="step-value">${charactersDisplay}</span>
+                </div>
+                <div class="step-item">
+                    <span class="step-label">简述</span>
+                    <span class="step-value">${step.summary || '-'}</span>
                 </div>
                 <div class="step-item">
                     <span class="step-label">阻碍</span>
@@ -661,19 +1000,6 @@ function renderPlotSteps() {
         `;
         stepsArea.appendChild(stepDiv);
     });
-}
-
-function editStep(index) {
-    const step = plotSteps[index];
-    const newPurpose = prompt('修改目的', step.purpose);
-    if (newPurpose !== null) step.purpose = newPurpose;
-    const newObstacle = prompt('修改阻碍', step.obstacle);
-    if (newObstacle !== null) step.obstacle = newObstacle;
-    const newAchievement = prompt('修改达成', step.achievement);
-    if (newAchievement !== null) step.achievement = newAchievement;
-    const newNarrative = prompt('修改描述', step.narrative);
-    if (newNarrative !== null) step.narrative = newNarrative;
-    renderPlotSteps();
 }
 
 async function removeStep(index) {
@@ -1064,6 +1390,7 @@ async function saveCurrentPlot() {
 
 window.LifeSimulator = window.LifeSimulator || {};
 window.LifeSimulator.PLOT_DESIGNER_PROMPT = PLOT_DESIGNER_PROMPT;
+window.LifeSimulator.FATE_WEAVER_PROMPT = FATE_WEAVER_PROMPT;
 window.LifeSimulator.showPlotDriver = showPlotDriver;
 window.LifeSimulator.showPlotWeaverCreator = showPlotWeaverCreator;
 window.LifeSimulator.exitPlotWeaver = exitPlotWeaver;
@@ -1072,6 +1399,10 @@ window.LifeSimulator.continuePlot = continuePlot;
 window.LifeSimulator.startPlotWeaving = startPlotWeaving;
 window.LifeSimulator.generateNextStep = generateNextStep;
 window.LifeSimulator.savePlotStep = savePlotStep;
+window.LifeSimulator.showStepCreator = showStepCreator;
+window.LifeSimulator.generateStep = generateStep;
+window.LifeSimulator.regenerateStep = regenerateStep;
+window.LifeSimulator.saveStep = saveStep;
 window.LifeSimulator.showCharacterCreator = showCharacterCreator;
 window.LifeSimulator.generateCharacter = generateCharacter;
 window.LifeSimulator.regenerateCharacter = regenerateCharacter;

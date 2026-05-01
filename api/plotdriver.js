@@ -337,22 +337,25 @@ router.post('/plot-characters/b带出', async (req, res) => {
 
 router.post('/plot-steps', async (req, res) => {
     try {
-        const { plotId, stepNumber, purpose, obstacle, achievement, narrative, status } = req.body;
-        
-        if (!plotId || stepNumber === undefined || !purpose || !obstacle || !achievement) {
+        const { plotId, stepNumber, purpose, emotion, characters, summary, obstacle, achievement, narrative, status } = req.body;
+
+        if (!plotId || stepNumber === undefined || !purpose) {
             return res.status(400).json({ error: '缺少必要参数' });
         }
-        
+
         const result = await createPlotStep({
             plotId,
             stepNumber,
             purpose,
-            obstacle,
-            achievement,
-            narrative,
-            status
+            emotion: emotion || '',
+            characters: characters || '[]',
+            summary: summary || '',
+            obstacle: obstacle || '',
+            achievement: achievement || '',
+            narrative: narrative || '',
+            status: status || 'pending'
         });
-        
+
         res.json({ success: true, step: result });
     } catch (err) {
         res.status(500).json({ error: '创建剧情步骤失败', message: err.message });
@@ -370,16 +373,19 @@ router.get('/plot-steps/:plotId', async (req, res) => {
 
 router.put('/plot-step/:stepId', async (req, res) => {
     try {
-        const { purpose, obstacle, achievement, narrative, status } = req.body;
-        
+        const { purpose, emotion, characters, summary, obstacle, achievement, narrative, status } = req.body;
+
         const result = await updatePlotStep(req.params.stepId, {
             purpose,
-            obstacle,
-            achievement,
-            narrative,
-            status
+            emotion: emotion || '',
+            characters: characters || '[]',
+            summary: summary || '',
+            obstacle: obstacle || '',
+            achievement: achievement || '',
+            narrative: narrative || '',
+            status: status || 'pending'
         });
-        
+
         res.json({ success: true, ...result });
     } catch (err) {
         res.status(500).json({ error: '更新剧情步骤失败', message: err.message });
