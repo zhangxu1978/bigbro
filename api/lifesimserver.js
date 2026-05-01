@@ -12,7 +12,20 @@ const {
     createSave,
     getSave,
     getSavesByWorld,
-    deleteSave
+    deleteSave,
+    createPlot,
+    checkPlotAgeConflict,
+    getPlotsByWorld,
+    getPlot,
+    updatePlot,
+    deletePlot,
+    createPlotStep,
+    getPlotSteps,
+    updatePlotStep,
+    deletePlotStep,
+    getPlotByAge,
+    createPlotCharacter,
+    getPlotCharacters
 } = require('../utils/dbOperations');
 
 // 导入摘要生成模块
@@ -256,6 +269,264 @@ router.get('/lifesim/load/:id', async (req, res) => {
         });
     } catch (err) {
         res.status(500).json({ error: '加载游戏失败', message: err.message });
+    }
+});
+
+// ════════════════════════════════════
+//  剧情管理 API
+// ════════════════════════════════════
+
+router.post('/lifesim/plots', async (req, res) => {
+    try {
+        const { worldId, name, description, startAge, endAge, target, obstacle, achievement, reward, suspense } = req.body;
+
+        if (!worldId || !name || startAge === undefined || endAge === undefined) {
+            return res.status(400).json({ error: '缺少必要参数' });
+        }
+
+        if (startAge >= endAge) {
+            return res.status(400).json({ error: '开始年龄必须小于结束年龄' });
+        }
+
+        const hasConflict = await checkPlotAgeConflict(worldId, startAge, endAge);
+        if (hasConflict) {
+            return res.status(400).json({ error: '年龄范围与已有剧情冲突' });
+        }
+
+        const plotId = `plot_${worldId}_${Date.now()}`;
+        const result = await createPlot({
+            id: plotId,
+            worldId,
+            name,
+            description,
+            startAge,
+            endAge,
+            target,
+            obstacle,
+            achievement,
+            reward,
+            suspense,
+            status: 'draft'
+        });
+
+        res.json({ success: true, plot: result });
+    } catch (err) {
+        res.status(500).json({ error: '创建剧情失败', message: err.message });
+    }
+});
+
+router.get('/lifesim/plots/:worldId', async (req, res) => {
+    try {
+        const plots = await getPlotsByWorld(req.params.worldId);
+        res.json(plots);
+    } catch (err) {
+        res.status(500).json({ error: '获取剧情列表失败', message: err.message });
+    }
+});
+
+router.get('/lifesim/plot/:plotId', async (req, res) => {
+    try {
+        const plot = await getPlot(req.params.plotId);
+        if (!plot) {
+            return res.status(404).json({ error: '剧情不存在' });
+        }
+        res.json(plot);
+    } catch (err) {
+        res.status(500).json({ error: '获取剧情失败', message: err.message });
+    }
+});
+
+router.put('/lifesim/plot/:plotId', async (req, res) => {
+    try {
+        const { name, description, startAge, endAge, target, obstacle, achievement, reward, suspense, status } = req.body;
+        const plotId = req.params.plotId;
+
+        const existingPlot = await getPlot(plotId);
+        if (!existingPlot) {
+            return res.status(404).json({ error: '剧情不存在' });
+        }
+
+        if (startAge !== undefined && endAge !== undefined) {
+            if (startAge >= endAge) {
+                return res.status(400).json({ error: '开始年龄必须小于结束年龄' });
+            }
+
+            const hasConflict = await checkPlotAgeConflict(existingPlot.worldId, startAge, endAge, plotId);
+            if (hasConflict) {
+                return res.status(400).json({ error: '年龄范围与已有剧情冲突' });
+            }
+        }
+
+        const result = await updatePlot(plotId, {
+            name: name !== undefined ? name : existingPlot.name,
+            description: description !== undefined ? description : existingPlot.description,
+            startAge: startAge !== undefined ? startAge : existingPlot.startAge,
+            endAge: endAge !== undefined ? endAge : existingPlot.endAge,
+            target: target !== undefined ? target : existingPlot.target,
+            obstacle: obstacle !== undefined ? obstacle : existingPlot.obstacle,
+            achievement: achievement !== undefined ? achievement : existingPlot.achievement,
+            reward: reward !== undefined ? reward : existingPlot.reward,
+            suspense: suspense !== undefined ? suspense : existingPlot.suspense,
+            status: status !== undefined ? status : existingPlot.status
+        });
+
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ error: '更新剧情失败', message: err.message });
+    }
+});
+
+router.delete('/lifesim/plot/:plotId', async (req, res) => {
+    try {
+        const result = await deletePlot(req.params.plotId);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: '剧情不存在' });
+        }
+        res.json({ success: true, message: '剧情已删除' });
+    } catch (err) {
+        res.status(500).json({ error: '删除剧情失败', message: err.message });
+    }
+});
+
+router.post('/lifesim/plot-steps', async (req, res) => {
+    try {
+        const { plotId, stepOrder, age, content, result: stepResult, choices } = req.body;
+
+        if (!plotId || stepOrder === undefined || !content) {
+            return res.status(400).json({ error: '缺少必要参数' });
+        }
+
+        const stepId = `step_${plotId}_${Date.now()}`;
+        const result = await createPlotStep({
+            id: stepId,
+            plotId,
+            stepOrder,
+            age,
+            content,
+            result: stepResult,
+            choices
+        });
+
+        res.json({ success: true, step: result });
+    } catch (err) {
+        res.status(500).json({ error: '创建步骤失败', message: err.message });
+    }
+});
+
+router.get('/lifesim/plot-steps/:plotId', async (req, res) => {
+    try {
+        const steps = await getPlotSteps(req.params.plotId);
+        res.json(steps);
+    } catch (err) {
+        res.status(500).json({ error: '获取步骤列表失败', message: err.message });
+    }
+});
+
+router.put('/lifesim/plot-step/:stepId', async (req, res) => {
+    try {
+        const { stepOrder, age, content, result: stepResult, choices } = req.body;
+        const stepId = req.params.stepId;
+
+        const result = await updatePlotStep(stepId, {
+            stepOrder: stepOrder !== undefined ? stepOrder : undefined,
+            age: age !== undefined ? age : undefined,
+            content: content !== undefined ? content : undefined,
+            result: stepResult !== undefined ? stepResult : undefined,
+            choices: choices !== undefined ? choices : undefined
+        });
+
+        res.json({ success: true, ...result });
+    } catch (err) {
+        res.status(500).json({ error: '更新步骤失败', message: err.message });
+    }
+});
+
+router.delete('/lifesim/plot-step/:stepId', async (req, res) => {
+    try {
+        const result = await deletePlotStep(req.params.stepId);
+        if (result.changes === 0) {
+            return res.status(404).json({ error: '步骤不存在' });
+        }
+        res.json({ success: true, message: '步骤已删除' });
+    } catch (err) {
+        res.status(500).json({ error: '删除步骤失败', message: err.message });
+    }
+});
+
+router.get('/lifesim/plot-by-age/:worldId/:age', async (req, res) => {
+    try {
+        const plot = await getPlotByAge(req.params.worldId, parseInt(req.params.age));
+        if (!plot) {
+            return res.status(404).json({ error: '该年龄段没有剧情' });
+        }
+        res.json(plot);
+    } catch (err) {
+        res.status(500).json({ error: '获取剧情失败', message: err.message });
+    }
+});
+
+router.post('/lifesim/plot-characters', async (req, res) => {
+    try {
+        const { plotId, worldCharacterId, name, role, description, desire, stance, flaw, relationships } = req.body;
+
+        if (!plotId || !name) {
+            return res.status(400).json({ error: '缺少必要参数' });
+        }
+
+        const characterId = `pc_${plotId}_${Date.now()}`;
+        const result = await createPlotCharacter({
+            id: characterId,
+            plotId,
+            worldCharacterId,
+            name,
+            role,
+            description,
+            desire,
+            stance,
+            flaw,
+            relationships
+        });
+
+        res.json({ success: true, character: result });
+    } catch (err) {
+        res.status(500).json({ error: '创建剧情角色失败', message: err.message });
+    }
+});
+
+router.get('/lifesim/plot-characters/:plotId', async (req, res) => {
+    try {
+        const characters = await getPlotCharacters(req.params.plotId);
+        res.json(characters);
+    } catch (err) {
+        res.status(500).json({ error: '获取剧情角色列表失败', message: err.message });
+    }
+});
+
+router.post('/lifesim/plot-characters/b带出', async (req, res) => {
+    try {
+        const { plotId, worldCharacterId, name, role, description, desire, stance, flaw, relationships } = req.body;
+
+        if (!plotId || !name) {
+            return res.status(400).json({ error: '缺少必要参数' });
+        }
+
+        const characterId = `pc_${plotId}_${Date.now()}`;
+        const result = await createPlotCharacter({
+            id: characterId,
+            plotId,
+            worldCharacterId,
+            name,
+            role,
+            description,
+            desire,
+            stance,
+            flaw,
+            relationships
+        });
+
+        res.json({ success: true, character: result });
+    } catch (err) {
+        res.status(500).json({ error: '带出角色失败', message: err.message });
     }
 });
 

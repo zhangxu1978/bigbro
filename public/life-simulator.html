@@ -174,8 +174,48 @@
       <button class="back-btn" id="plot-save-btn" onclick="saveCurrentPlot()" style="display:none">💾 保存</button>
     </div>
     
-    <!-- 剧情设置面板 -->
-    <div class="plot-setup-panel" id="plot-setup-panel">
+    <!-- 剧情选择面板：进入旧剧情或新剧情 -->
+    <div class="plot-choice-panel" id="plot-choice-panel">
+      <div class="plot-choice-section">
+        <h3>📚 继续旧剧情</h3>
+        <p class="plot-choice-desc">从已有剧情继续推演</p>
+        <div class="plot-list-container" id="existing-plots-list">
+          <!-- 动态加载已有剧情列表 -->
+        </div>
+      </div>
+      <div class="plot-choice-divider">或</div>
+      <div class="plot-choice-section">
+        <h3>✨ 推演新剧情</h3>
+        <p class="plot-choice-desc">与剧情编织者对话，创建全新剧情</p>
+        <button class="plot-new-btn" onclick="showPlotWeaverCreator()">
+          <span class="btn-icon">🎭</span>
+          <span class="btn-text">开始新剧情</span>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 剧情编织者对话界面 -->
+    <div class="plot-weaver-area" id="plot-weaver-area" style="display:none">
+      <div class="plot-weaver-header">
+        <button class="back-btn" onclick="exitPlotWeaver()">← 返回</button>
+        <span class="plot-weaver-title">🎭 剧情编织者</span>
+      </div>
+      <div class="plot-weaver-chat" id="plot-weaver-chat">
+        <!-- 对话内容 -->
+      </div>
+      <div class="plot-weaver-input-area" id="plot-weaver-input-area">
+        <div class="custom-input-row">
+          <input class="custom-input" id="plot-weaver-input" placeholder="输入你的回答..." onkeydown="if(event.key==='Enter' && !event.shiftKey){ event.preventDefault(); submitPlotWeaverAnswer(); }" />
+          <button class="send-btn" id="plot-weaver-send-btn" onclick="submitPlotWeaverAnswer()">发送</button>
+        </div>
+        <div class="plot-weaver-hints" id="plot-weaver-hints">
+          <!-- 提示按钮 -->
+        </div>
+      </div>
+    </div>
+    
+    <!-- 剧情设置面板（保留用于简单手动创建） -->
+    <div class="plot-setup-panel" id="plot-setup-panel" style="display:none">
       <h3>🎬 剧情设置</h3>
       <div class="plot-form">
         <div class="form-row">

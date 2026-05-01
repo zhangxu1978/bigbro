@@ -443,8 +443,16 @@ async function renderWorldsGrid() {
         <span class="wc-tag">上次: ${date}</span>
         <span class="wc-tag">回合 ${world.turn || 0}</span>
       </div>
+      <div class="wc-actions">
+        <button class="wc-action-btn play-btn" onclick="showSavesModal('${world.id}', '${world.name || '未知世界'}')">▶ 继续冒险</button>
+        <button class="wc-action-btn plot-btn" onclick="showPlotDriver('${world.id}')">📜 剧情推演</button>
+      </div>
     `;
-    card.onclick = () => showSavesModal(world.id, world.name || '未知世界');
+    card.onclick = (e) => {
+      if (!e.target.classList.contains('wc-action-btn') && !e.target.classList.contains('del-btn')) {
+        showSavesModal(world.id, world.name || '未知世界');
+      }
+    };
     grid.appendChild(card);
   });
 }
